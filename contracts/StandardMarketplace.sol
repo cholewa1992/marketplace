@@ -8,7 +8,7 @@ contract StandardMarketplace is Marketplace {
     Token public token;
 
     /* Mappings */
-    mapping(address => Offer) offers; //Tradeable => Offer
+    mapping(address => Offer) public offers; //Tradeable => Offer
     mapping(address => mapping(address => uint)) balance; //Tradeable => Buyer => Balance
 
 
@@ -17,8 +17,14 @@ contract StandardMarketplace is Marketplace {
     modifier isOwnerOf(Tradeable _item) { if(msg.sender == _item.owner()) _ else throw; }
     modifier isAuthorizedToSell(Tradeable _item) { if(_item.isAuthorizedToSell(this)) _ else throw; }
 
+    function StandardMarketplace(Token _token) {
+        token = _token;
+    }
+
     function extendOffer(Tradeable _item, address _buyer, uint _price)
-    isOwnerOf(_item) isAuthorizedToSell(_item) returns (bool success) {
+    isOwnerOf(_item) 
+    isAuthorizedToSell(_item) 
+    returns (bool success) {
         offers[_item] = Offer({ seller: _item.owner(), buyer: _buyer, amount: _price, accepted: false});
         SellerAddedOffer(_item);
         return true;
@@ -31,7 +37,7 @@ contract StandardMarketplace is Marketplace {
         if(offer.accepted) return false;
 
         /* Check if the buyer have sufficient funds */
-        if(token.allowance(msg.sender, this) < offer.amount) return false;
+        if(token.allowance(offer.buyer, this) < offer.amount) return false;
 
         /* Transfer funds from the buyer to the market */
         if(!token.transferFrom(offer.buyer, this, offer.amount)) throw;
@@ -55,7 +61,8 @@ contract StandardMarketplace is Marketplace {
         return true;
     }
 
-    function completeTransaction(Tradeable _item) isBuyerOf(_item) returns (bool success) {
+    function completeTransaction(Tradeable _item) isBuyerOf(_item) 
+    returns (bool success) {
 
         /* Getting the offer */
         var offer = offers[_item];
@@ -71,7 +78,7 @@ contract StandardMarketplace is Marketplace {
         if(!token.transfer(offer.seller, offer.amount)) throw;
 
         /* Transferring ownership to the buyer */
-        if(!_item.transferOwnership(offer.buyer)) throw;
+        _item.transferOwnership(offer.buyer);
         BuyerCompletedTransaction(_item);
 
         delete offers[_item];

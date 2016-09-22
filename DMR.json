@@ -1,0 +1,74 @@
+[
+    {
+        "constant": false,
+        "inputs": [
+            {
+                "name": "_item",
+                "type": "address"
+            }
+        ],
+        "name": "wasDisposed",
+        "outputs": [],
+        "type": "function"
+    },
+    {
+        "constant": false,
+        "inputs": [
+            {
+                "name": "_item",
+                "type": "address"
+            }
+        ],
+        "name": "ownershipChanged",
+        "outputs": [],
+        "type": "function"
+    },
+    {
+        "constant": true,
+        "inputs": [],
+        "name": "lastIssued",
+        "outputs": [
+            {
+                "name": "",
+                "type": "address"
+            }
+        ],
+        "type": "function"
+    },
+    {
+        "constant": false,
+        "inputs": [
+            {
+                "name": "_name",
+                "type": "string"
+            }
+        ],
+        "name": "issueVehicle",
+        "outputs": [],
+        "type": "function"
+    },
+    {
+        "anonymous": false,
+        "inputs": [
+            {
+                "indexed": false,
+                "name": "item",
+                "type": "Issueable"
+            }
+        ],
+        "name": "ItemChangedOwner",
+        "type": "event"
+    },
+    {
+        "anonymous": false,
+        "inputs": [
+            {
+                "indexed": false,
+                "name": "item",
+                "type": "Disposable"
+            }
+        ],
+        "name": "ItemWasDisposed",
+        "type": "event"
+    }
+]

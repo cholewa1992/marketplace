@@ -1,12 +1,7 @@
 var accounts;
 var account;
-var balance;
 
-function setStatus(message) {
-  var status = document.getElementById("status");
-  status.innerHTML = message;
-};
-
+/*
 function refreshBalance() {
   var meta = MetaCoin.deployed();
 
@@ -34,23 +29,48 @@ function sendCoin() {
     console.log(e);
     setStatus("Error sending coin; see log.");
   });
+};*/
+
+
+function addItem(item) {
+    items.push(item);
+}
+
+function sellItem(item) {
+
+    var item = document.getElementById("item");
+    var receiver = document.getElementById("buyer");
+    var amount = parseInt(document.getElementById("amount").value);
+
+    var market = StandardMarket.deployed();
+
+    market.extendOffer(item, receiver, amount, {from: account}).then(function() {
+        setStatus("Offer extended");
+    }).catch(function(e) {
+        console.log(e);
+        setStatus("Error extending offer; see log.");
+    });
+
+}
+
+function setStatus(message) {
+  var status = document.getElementById("status");
+  status.innerHTML = message;
 };
 
 window.onload = function() {
-  web3.eth.getAccounts(function(err, accs) {
-    if (err != null) {
-      alert("There was an error fetching your accounts.");
-      return;
-    }
+    web3.eth.getAccounts(function(err, accs) {
+        if (err != null) {
+            alert("There was an error fetching your accounts.");
+            return;
+        }
 
-    if (accs.length == 0) {
-      alert("Couldn't get any accounts! Make sure your Ethereum client is configured correctly.");
-      return;
-    }
+        if (accs.length == 0) {
+            alert("Couldn't get any accounts! Make sure your Ethereum client is configured correctly.");
+            return;
+        }
 
-    accounts = accs;
-    account = accounts[0];
-
-    refreshBalance();
-  });
+        accounts = accs;
+        account = accounts[0];
+    });
 }

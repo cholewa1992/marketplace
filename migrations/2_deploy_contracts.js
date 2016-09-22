@@ -1,5 +1,8 @@
 module.exports = function(deployer) {
-  deployer.deploy(StandardTradeable);
-  deployer.autolink();
-  deployer.deploy(StandardMarketplace);
+
+    deployer.deploy(HumanStandardToken, 1000000, "Danske Kroner", 0, "DKK").then(function() {
+        return deployer.deploy(StandardMarketplace, HumanStandardToken.address);
+    });
+    deployer.autolink();
+    deployer.deploy(DMR);
 };
