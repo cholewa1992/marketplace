@@ -12,6 +12,7 @@
         "chai": "*",
         "chai-as-promised": "*",
         "chai-bignumber": "*",
-        "chai-spies": "*"
+        "chai-spies": "*",
+        "ethereumjs-testrpc": "*"
     }
 }

@@ -1,4 +1,17 @@
-sudo: required
 language: node_js
-script:
-- npm test
+node_js:
+  - "6"
+env:
+  - CXX=g++-4.8
+addons:
+  apt:
+    sources:
+      - ubuntu-toolchain-r-test
+    packages:
+      - g++-4.8
+before_script:
+  - unset NODE_ENV
+  - ./node_modules/ethereumjs-testrpc/bin/testrpc &
+script: node ./node_modules/truffle/cli.js test -e test
+after_script:
+  - killall node
