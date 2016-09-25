@@ -8,6 +8,8 @@
         "test": "truffle test"
     },
     "dependencies": {
+        "testrpc", "*",
+        "truffle": "*",
         "chai": "*",
         "chai-as-promised": "*",
         "chai-bignumber": "*",
