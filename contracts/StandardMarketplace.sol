@@ -20,7 +20,7 @@ contract StandardMarketplace is Marketplace {
     function StandardMarketplace(Token _token) {
         token = _token;
         if(token.totalSupply() <= 0) throw; //This seams to be an invalid contract
-        if(token.balanceOf(this) != 0) throw; 
+        if(token.balanceOf(this) != 0) throw;
     }
 
     function extendOffer(Tradeable _item, address _buyer, uint _price)
@@ -60,6 +60,7 @@ contract StandardMarketplace is Marketplace {
             var amount = balance[_item][offer.buyer];
             balance[_item][offer.buyer] = 0;
             if(!token.transfer(offer.buyer, amount)) throw;
+        }
 
 
         /* Revoke offer */
@@ -69,7 +70,7 @@ contract StandardMarketplace is Marketplace {
         return true;
     }
 
-    function completeTransaction(Tradeable _item) isBuyerOf(_item) 
+    function completeTransaction(Tradeable _item) isBuyerOf(_item)
     returns (bool success) {
 
         /* Getting the offer */
@@ -105,7 +106,7 @@ contract StandardMarketplace is Marketplace {
         var amount = balance[_item][offer.buyer];
         balance[_item][offer.buyer] = 0;
         if(!token.transfer(offer.buyer, amount)) throw;
-        
+
 
         /* Cancel sale of the item */
         BuyerAbortedTransaction(_item);
