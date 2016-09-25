@@ -26,7 +26,7 @@ contract Token {
 
     /// @param _owner The address from which the balance will be retrieved
     /// @return The balance
-    function balanceOf(address _owner) returns (uint256 balance);
+    function balanceOf(address _owner) constant returns (uint256 balance);
 
     /// @notice send `_value` token to `_to` from `msg.sender`
     /// @param _to The address of the recipient
@@ -83,7 +83,7 @@ contract StandardToken is Token {
         } else { return false; }
     }
 
-    function balanceOf(address _owner) returns (uint256 balance) {
+    function balanceOf(address _owner) constant returns (uint256 balance) {
         return balances[_owner];
     }
 

@@ -1,4 +1,23 @@
-contract('HumanStandardToken', function(accounts) {
+"use strict"
+
+const chai = require("chai")
+chai.use(require("chai-as-promised"))
+chai.use(require("chai-spies"));
+chai.should();
+
+function asyncInt(r){
+    return new Promise((accept, reject) => {
+        r.then(i => accept(i.c[0])).catch(reject);
+    })
+}
+
+function async(r){
+    return new Promise((accept, reject) => {
+        r.then(accept).catch(reject);
+    })
+}
+
+contract("Integration", function(accounts) {
     it("should be able to make full sales transaction", function() {
 
         var token = HumanStandardToken.deployed();
@@ -51,7 +70,6 @@ contract('HumanStandardToken', function(accounts) {
             });
 
         }).then(function(){
-
             /* Authorizing the market */
             return car.authorizeMarket(market.address, {from: seller});
 

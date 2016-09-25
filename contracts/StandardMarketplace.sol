@@ -19,13 +19,15 @@ contract StandardMarketplace is Marketplace {
 
     function StandardMarketplace(Token _token) {
         token = _token;
+        if(token.totalSupply() <= 0) throw; //This seams to be an invalid contract
+        if(token.balanceOf(this) != 0) throw; 
     }
 
     function extendOffer(Tradeable _item, address _buyer, uint _price)
     isOwnerOf(_item) 
     isAuthorizedToSell(_item) 
     returns (bool success) {
-        offers[_item] = Offer({ seller: _item.owner(), buyer: _buyer, amount: _price, accepted: false});
+        offers[_item] = Offer({ seller: msg.sender, buyer: _buyer, amount: _price, accepted: false});
         SellerAddedOffer(_item);
         return true;
     }
@@ -51,8 +53,14 @@ contract StandardMarketplace is Marketplace {
     }
 
     function revokeOffer(Tradeable _item) isOwnerOf(_item) returns (bool success) {
-        /* Cannot revoke an accepted offer */
-        if(offers[_item].accepted) return false;
+        var offer = offers[_item];
+
+        if(offer.accepted) {
+            /* transferring all locked funds back to the buyer */
+            var amount = balance[_item][offer.buyer];
+            balance[_item][offer.buyer] = 0;
+            if(!token.transfer(offer.buyer, amount)) throw;
+
 
         /* Revoke offer */
         SellerRevokedOffer(_item);
@@ -93,9 +101,11 @@ contract StandardMarketplace is Marketplace {
         /* Can only abort the transaction if the offer was accepted */
         if(!offer.accepted) return false;
 
-        /* Transferring all locked funds back to the buyer */
-        if(!token.transfer(offer.buyer, balance[_item][offer.buyer])) throw;
+        /* transferring all locked funds back to the buyer */
+        var amount = balance[_item][offer.buyer];
         balance[_item][offer.buyer] = 0;
+        if(!token.transfer(offer.buyer, amount)) throw;
+        
 
         /* Cancel sale of the item */
         BuyerAbortedTransaction(_item);

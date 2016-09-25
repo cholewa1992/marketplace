@@ -7,9 +7,9 @@ contract Marketplace {
     function completeTransaction(Tradeable _item) returns (bool success);
     function abortTransaction(Tradeable _item) returns (bool success);
 
-    event BuyerAcceptedOffer(Tradeable item);
-    event SellerAddedOffer(Tradeable item);
-    event SellerRevokedOffer(Tradeable item);
-    event BuyerCompletedTransaction(Tradeable item);
-    event BuyerAbortedTransaction(Tradeable item);
+    event BuyerAcceptedOffer(address item);
+    event SellerAddedOffer(address item);
+    event SellerRevokedOffer(address item);
+    event BuyerCompletedTransaction(address item);
+    event BuyerAbortedTransaction(address item);
 }

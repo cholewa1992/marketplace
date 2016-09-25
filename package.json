@@ -1,0 +1,16 @@
+{
+    "name": "marketplace",
+    "main": "truffle.js",
+    "directories": {
+        "test": "test"
+    },
+    "scripts": {
+        "test": "truffle test"
+    },
+    "dependencies": {
+        "chai": "*",
+        "chai-as-promised": "*",
+        "chai-bignumber": "*",
+        "chai-spies": "*"
+    }
+}
