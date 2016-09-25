@@ -8,7 +8,6 @@
         "test": "truffle test"
     },
     "dependencies": {
-        "ethereumjs-testrpc": "*",
         "truffle": "*",
         "chai": "*",
         "chai-as-promised": "*",
