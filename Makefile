@@ -1,7 +1,7 @@
 build: FORCE
-	./node_modules/truffle/cli.js build	
+	truffle build	
 
 test: FORCE
-	(./node_modules/ethereumjs-testrpc/bin/testrpc > /dev/null) & ./node_modules/truffle/cli.js test -e test
+	(testrpc > /dev/null) & truffle test -e test
 	killall node
 FORCE: 
