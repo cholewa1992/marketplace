@@ -1,12 +1,22 @@
 {
     "name": "marketplace",
     "main": "truffle.js",
+    "version": "0.0.1",
+
     "directories": {
         "test": "test"
     },
+
+    "repository" :
+    {
+        "type" : "git",
+        "url" : "https://github.com/cholewa1992/market.git"
+    },
+
     "scripts": {
         "test": "truffle test"
     },
+
     "dependencies": {
         "truffle": "*",
         "chai": "*",
