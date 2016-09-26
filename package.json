@@ -14,11 +14,15 @@
     },
 
     "scripts": {
+        "build": "truffle build",
         "test": "truffle test"
     },
 
     "dependencies": {
-        "truffle": "*",
+        "truffle": "*"
+    },
+
+    "devDependencies": {
         "chai": "*",
         "chai-as-promised": "*",
         "chai-bignumber": "*",
