@@ -7,7 +7,7 @@ chai.should();
 
 function asyncInt(r){
     return new Promise((accept, reject) => {
-        r.then(i => accept(i.c[0])).catch(reject);
+        r.then(i => accept(i.toNumber())).catch(reject);
     })
 }
 

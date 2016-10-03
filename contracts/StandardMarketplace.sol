@@ -10,7 +10,7 @@ contract StandardMarketplace is Marketplace {
     /* Mappings */
     mapping(address => Offer) public offers; //Tradeable => Offer
     mapping(address => mapping(address => uint)) balance; //Tradeable => Buyer => Balance
-
+    mapping(address => address[]) buyer; //Buyer => Tradeables
 
     /* Modifiers */
     modifier isBuyerOf(Tradeable _item) { if(offers[_item].buyer == msg.sender) _ else throw; }
@@ -28,6 +28,7 @@ contract StandardMarketplace is Marketplace {
     isAuthorizedToSell(_item) 
     returns (bool success) {
         offers[_item] = Offer({ seller: msg.sender, buyer: _buyer, amount: _price, accepted: false});
+        buyer[_buyer].push(_item);
         SellerAddedOffer(_item);
         return true;
     }
