@@ -8,9 +8,9 @@ contract StandardMarketplace is Marketplace {
     Token public token;
 
     /* Mappings */
+    address[] indexes;
     mapping(address => Offer) public offers; //Tradeable => Offer
     mapping(address => mapping(address => uint)) balance; //Tradeable => Buyer => Balance
-    mapping(address => address[]) buyer; //Buyer => Tradeables
 
     /* Modifiers */
     modifier isBuyerOf(Tradeable _item) { if(offers[_item].buyer == msg.sender) _ else throw; }
@@ -24,11 +24,10 @@ contract StandardMarketplace is Marketplace {
     }
 
     function extendOffer(Tradeable _item, address _buyer, uint _price)
-    isOwnerOf(_item) 
-    isAuthorizedToSell(_item) 
+    isOwnerOf(_item)
+    isAuthorizedToSell(_item)
     returns (bool success) {
-        offers[_item] = Offer({ seller: msg.sender, buyer: _buyer, amount: _price, accepted: false});
-        buyer[_buyer].push(_item);
+        addOffer(_item, Offer({ seller: msg.sender, buyer: _buyer, amount: _price, accepted: false}));
         SellerAddedOffer(_item);
         return true;
     }
@@ -39,12 +38,14 @@ contract StandardMarketplace is Marketplace {
         /* Offer can only be accepted once */
         if(offer.accepted) return false;
 
-        /* Check if the buyer have sufficient funds */
-        if(token.allowance(offer.buyer, this) < offer.amount) return false;
+        if(offer.amount > 0){
+            /* Check if the buyer have sufficient funds */
+            if(token.allowance(offer.buyer, this) < offer.amount) return false;
 
-        /* Transfer funds from the buyer to the market */
-        if(!token.transferFrom(offer.buyer, this, offer.amount)) throw;
-        balance[_item][offer.buyer] += offer.amount;
+            /* Transfer funds from the buyer to the market */
+            if(!token.transferFrom(offer.buyer, this, offer.amount)) throw;
+            balance[_item][offer.buyer] += offer.amount;
+        }
 
         /* Accept the offer */
         offer.accepted = true;
@@ -66,7 +67,7 @@ contract StandardMarketplace is Marketplace {
 
         /* Revoke offer */
         SellerRevokedOffer(_item);
-        delete offers[_item];
+        removeOffer(_item, offers[_item]);
 
         return true;
     }
@@ -80,18 +81,20 @@ contract StandardMarketplace is Marketplace {
         /* Can only complete the transaction if the offer was accepted */
         if(!offer.accepted) return false;
 
-        /* The buyer must have sufficient funds */
-        if(balance[_item][offer.buyer] < offer.amount) return false;
+        if(offer.amount > 0){
+            /* The buyer must have sufficient funds */
+            if(balance[_item][offer.buyer] < offer.amount) return false;
 
-        /* Transferring funds to the seller */
-        balance[_item][offer.buyer] -= offer.amount;
-        if(!token.transfer(offer.seller, offer.amount)) throw;
+            /* Transferring funds to the seller */
+            balance[_item][offer.buyer] -= offer.amount;
+            if(!token.transfer(offer.seller, offer.amount)) throw;
+        }
 
         /* Transferring ownership to the buyer */
         _item.transferOwnership(offer.buyer);
         BuyerCompletedTransaction(_item);
 
-        delete offers[_item];
+        removeOffer(_item, offers[_item]);
         return true;
     }
 
@@ -111,9 +114,66 @@ contract StandardMarketplace is Marketplace {
 
         /* Cancel sale of the item */
         BuyerAbortedTransaction(_item);
-        delete offers[_item];
+        removeOffer(_item, offers[_item]);
 
         return true;
+    }
+
+    function addOffer(Tradeable _item, Offer _offer) private {
+
+        var found = false;
+        for(uint i = 0; i < indexes.length; i++){
+           if(indexes[i] == address(_item)){
+               found = true;
+               break;
+           }
+        }
+
+        if(!found){
+            indexes.push(_item);
+        }
+
+        offers[_item] = _offer;
+    }
+
+    function removeOffer(Tradeable _item, Offer _offer) private {
+
+        for(uint i = 0; i < indexes.length; i++){
+            if(indexes[i] == address(_item)) {
+                delete indexes[i];
+            }
+        }
+
+        delete offers[_item];
+
+    }
+
+    function getItemsOfferedTo(address _addr) constant returns(address[]){
+
+        var index = 0;
+        address[] memory items = new address[](2);
+        for(uint i = 0; i < indexes.length; i++){
+            if(offers[indexes[i]].buyer == _addr){
+                if(index == items.length){
+                    address[] memory n = new address[](items.length * 2);
+                    for(uint j = 0; j < items.length; j++){
+                        n[j] = items[j];
+                    }
+                    delete items;
+                    items = n;
+                }
+
+                items[index] = indexes[i];
+                index++;
+            }
+        }
+
+        address[] memory result = new address[](index);
+
+        for(uint k = 0; k < index; k++){
+            result[k] = items[k];
+        }
+        return result;
     }
 
     struct Offer {

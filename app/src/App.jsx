@@ -29,6 +29,7 @@ class App extends Component {
 
     componentWillMount() {
 
+
         if (typeof web3 !== 'undefined') {
             web3 = new Web3(web3.currentProvider);
         } else {
@@ -42,6 +43,7 @@ class App extends Component {
         Market.setProvider(web3.currentProvider);
 
         var acc = web3.eth.coinbase;
+        var other = web3.eth.accounts[1];
         var token = Token.deployed();
         var dmr = DMR.deployed();
         var market = Market.deployed();
@@ -58,9 +60,25 @@ class App extends Component {
         }));
 
         dmr.issueVehicle("Car" + Math.random(), { from:  acc });
+
         updateCars();
         dmr.VehicleIssued().watch(() => updateCars());
-        dmr.lookup("BMW 330d").then(car => console.log(car));
+
+        dmr.VehicleIssued().watch((err,r) => {
+
+            let car = Vehicle.at(r.args.addr);
+            car.authorizeMarket(market.address, { from: acc }).then(() => {
+                market.extendOffer(car.address, other, 0, { from: acc }).then(() => {
+                    market.acceptOffer(car.address, { from: other }).then(() => {
+                        market.completeTransaction(car.address, { from: other });
+                    }).catch((e) => {});
+                }).catch((e) => {});
+            }).catch((e) => {});
+        });
+
+        market.BuyerCompletedTransaction().watch((err,r) => {
+            console.log("Sale completed!");
+        });
 
     }
 

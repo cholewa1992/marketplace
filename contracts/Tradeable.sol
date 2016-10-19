@@ -93,7 +93,7 @@ contract DMR  {
     function getVehiclesOwnedBy(address _addr) constant returns(address[]){
 
         var index = 0;
-        address[] memory cars = new address[](200);
+        address[] memory cars = new address[](2);
         for(uint i = 0; i < vehicles.length; i++){
             if(Vehicle(vehicles[i]).owner() == _addr){
 
@@ -112,6 +112,12 @@ contract DMR  {
             }
         }
 
-        return cars;
+        address[] memory result = new address[](index);
+
+        for(uint k = 0; k < index; k++){
+            result[k] = cars[k];
+        }
+
+        return result;
     }
 }
