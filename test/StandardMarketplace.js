@@ -29,6 +29,7 @@ function asyncEvent(event){
 
 contract("StandardMarketplace", accounts => {
 
+
     let token;
     let initialAmount = 1000;
 
@@ -247,7 +248,7 @@ contract("StandardMarketplace", accounts => {
                     {from: buyer}       // executor
                 )).should.be.fulfilled,
 
-                 /* Asserting that the event was fired */
+                /* Asserting that the event was fired */
                 asyncEvent(market.BuyerAcceptedOffer(
                     {fromBlock: "latest"}
                 )).then(e => e.args["item"])
@@ -538,7 +539,7 @@ contract("StandardMarketplace", accounts => {
                 )).should.eventually.equal(0),
 
                 async(tradeable.owner.call())
-                    .should.eventually.equal(buyer),
+                .should.eventually.equal(buyer),
 
                 async(market.offers.call(
                     tradeable.address   // item address
@@ -547,7 +548,7 @@ contract("StandardMarketplace", accounts => {
             ])
         })
 
-       it("should not be possible to completeTransaction if not buyer", () => {
+        it("should not be possible to completeTransaction if not buyer", () => {
             return Promise.all([
 
                 /* Allowing the market to withdraw funds from the buyer */
@@ -633,7 +634,7 @@ contract("StandardMarketplace", accounts => {
                 )).should.eventually.equal(1000),
 
                 async(tradeable.owner.call())
-                    .should.eventually.equal(owner)
+                .should.eventually.equal(owner)
 
             ])
         })
@@ -674,7 +675,7 @@ contract("StandardMarketplace", accounts => {
                 )).should.eventually.equal(1000),
 
                 async(tradeable.owner.call())
-                    .should.eventually.equal(owner)
+                .should.eventually.equal(owner)
 
             ])
         })
@@ -733,7 +734,7 @@ contract("StandardMarketplace", accounts => {
                 )).should.eventually.equal(1000),
 
                 async(tradeable.owner.call())
-                    .should.eventually.equal(owner),
+                .should.eventually.equal(owner),
 
                 async(market.offers.call(
                     tradeable.address   // item address
@@ -853,7 +854,7 @@ contract("StandardMarketplace", accounts => {
                 )).should.eventually.equal(1000),
 
                 async(tradeable.owner.call())
-                    .should.eventually.equal(owner),
+                .should.eventually.equal(owner),
 
                 async(market.offers.call(
                     tradeable.address   // item address
@@ -864,4 +865,105 @@ contract("StandardMarketplace", accounts => {
     })
 })
 
+contract("IndexedMarketplace", accounts => {
+
+    let token;
+    let initialAmount = 1000;
+
+    let owner = accounts[0];
+    let buyer = accounts[1];
+    let none = "0x0000000000000000000000000000000000000000";
+
+    beforeEach(() => {
+        return async(HumanStandardToken.new(
+            initialAmount,  // Initial amount of coins
+            "Test token",   // Name of the token
+            0,              // Number of decimal points
+            "tt",           // Token symbol
+            {from: buyer}   // Executing account
+        )).then(i => token = i)
+    })
+
+    describe("Initiate", () => {
+        it("should be possible to create new instance", () => {
+            return async(IndexedMarketplace.new(token.address))
+                .should.be.fulfilled;
+        })
+    })
+
+    describe("Public methods", () => {
+
+        let market;
+        let tradeable;
+
+        beforeEach(() => {
+            return Promise.all([
+
+                async(IndexedMarketplace.new(token.address))
+                .then(i => market = i),
+
+                async(Tradeable.new({from: owner})
+                    .then(i => tradeable = i))
+
+            ]);
+        })
+
+        it("should increase the number of offered items when offer extended", () => {
+            return Promise.all([
+
+                asyncInt(market.getNumberOfItemsOffered())
+                .should.eventually.equal(0),
+
+                /* Allowing tradable to sold on market */
+                async(tradeable.authorizeMarket(
+                    market.address,     // market address
+                    {from: owner}       // executor
+                )).should.be.fulfilled,
+
+                async(market.extendOffer(
+                    tradeable.address,  // item address
+                    buyer,              // buyers address
+                    1000,               // amount
+                    {from: owner}       // executor
+                )).should.be.fulfilled,
+
+                asyncInt(market.getNumberOfItemsOffered())
+                .should.eventually.equal(1)
+
+            ])
+        })
+
+        it("should decrease the number of offered items when offer extended", () => {
+            return Promise.all([
+
+
+                /* Allowing tradable to sold on market */
+                async(tradeable.authorizeMarket(
+                    market.address,     // market address
+                    {from: owner}       // executor
+                )).should.be.fulfilled,
+
+                async(market.extendOffer(
+                    tradeable.address,  // item address
+                    buyer,              // buyers address
+                    1000,               // amount
+                    {from: owner}       // executor
+                )).should.be.fulfilled,
+
+                asyncInt(market.getNumberOfItemsOffered())
+                .should.eventually.equal(1),
+
+                async(market.revokeOffer(
+                    tradeable.address,  // item address
+                    {from: owner}       // executor
+                )).should.be.fulfilled,
+
+                asyncInt(market.getNumberOfItemsOffered())
+                .should.eventually.equal(0)
+
+            ])
+        })
+
+    })
+})
 // vim: cc=90

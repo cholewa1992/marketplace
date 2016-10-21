@@ -1,6 +1,8 @@
+import "Token.sol";
 import "Tradeable.sol";
 
 contract Marketplace {
+
     function extendOffer(Tradeable _item, address _buyer, uint price) returns (bool success);
     function revokeOffer(Tradeable _item) returns (bool success);
     function acceptOffer(Tradeable _item) returns (bool success);
@@ -12,6 +14,7 @@ contract Marketplace {
     event SellerRevokedOffer(address item);
     event BuyerCompletedTransaction(address item);
     event BuyerAbortedTransaction(address item);
+
 }
 
 contract StandardMarketplace is Marketplace {
@@ -21,9 +24,8 @@ contract StandardMarketplace is Marketplace {
     Token public token;
 
     /* Mappings */
-    address[] indexes;
     mapping(address => Offer) public offers; //Tradeable => Offer
-    mapping(address => mapping(address => uint)) balance; //Tradeable => Buyer => Balance
+    mapping(address => mapping(address => uint)) private balance; //Tradeable => Buyer => Balance
 
     /* Modifiers */
     modifier isBuyerOf(Tradeable _item) { if(offers[_item].buyer == msg.sender) _ else throw; }
@@ -119,11 +121,10 @@ contract StandardMarketplace is Marketplace {
         /* Can only abort the transaction if the offer was accepted */
         if(!offer.accepted) return false;
 
-        /* transferring all locked funds back to the buyer */
+        /* Transferring all locked funds back to the buyer */
         var amount = balance[_item][offer.buyer];
         balance[_item][offer.buyer] = 0;
         if(!token.transfer(offer.buyer, amount)) throw;
-
 
         /* Cancel sale of the item */
         BuyerAbortedTransaction(_item);
@@ -134,19 +135,63 @@ contract StandardMarketplace is Marketplace {
 
     function addOffer(Tradeable _item, Offer _offer) private {
 
-        var found = false;
-        for(uint i = 0; i < indexes.length; i++){
-           if(indexes[i] == address(_item)){
-               found = true;
-               break;
-           }
-        }
-
-        if(!found){
-            indexes.push(_item);
-        }
-
         offers[_item] = _offer;
+    }
+
+    function removeOffer(Tradeable _item, Offer _offer) private {
+
+        delete offers[_item];
+
+    }
+
+    struct Offer {
+        address seller;
+        address buyer;
+        uint amount; //The purchase cost
+        bool accepted; //Whether or not the offer is accepted
+    }
+
+    /* Ether can't be transferred to this account */
+    function () { throw; }
+}
+
+
+contract IndexedMarketplace is StandardMarketplace {
+
+    address[] private indexes;
+
+    function IndexedMarketplace(Token _token) StandardMarketplace(_token) {
+
+    }
+
+    function addOffer(Tradeable _item, Offer _offer) private {
+
+        int256 index = -1;  // Index of the item
+        int256 free = -1;   // Index of first free slot in indexes
+
+        for(uint i = 0; i < indexes.length; i++){
+
+            if(indexes[i] == address(0x0) && free < 0){
+                free = int256(i);
+            }
+
+            if(indexes[i] == address(_item)){
+                index = int256(i);
+                break;
+            }
+
+        }
+
+        if(index < 0){
+            if(free < 0) {
+                indexes.push(_item);
+            } else {
+                indexes[uint256(free)] = _item;
+            }
+        }
+
+        super.addOffer(_item,_offer);
+
     }
 
     function removeOffer(Tradeable _item, Offer _offer) private {
@@ -157,8 +202,21 @@ contract StandardMarketplace is Marketplace {
             }
         }
 
-        delete offers[_item];
+        super.removeOffer(_item,_offer);
 
+    }
+
+    function getNumberOfItemsOffered() constant returns(uint){
+
+        var size = 0;
+
+        for(uint i = 0; i < indexes.length; i++){
+            if(indexes[i] != address(0x0)){
+                size++;
+            }
+        }
+
+        return size;
     }
 
     function getItemsOfferedTo(address _addr) constant returns(address[]){
@@ -189,13 +247,4 @@ contract StandardMarketplace is Marketplace {
         return result;
     }
 
-    struct Offer {
-        address seller;
-        address buyer;
-        uint amount; //The purchase cost
-        bool accepted; //Whether or not the offer is accepted
-    }
-
-    /* Ether can't be transferred to this account */
-    function () { throw; }
 }
