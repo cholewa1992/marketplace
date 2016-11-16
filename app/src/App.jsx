@@ -1,109 +1,61 @@
 /* React import */
+
 import React, { Component } from 'react';
-import logo from './logo.svg';
+import { InputGroup, InputGroupButton } from 'reactstrap';
+import { Navbar, NavbarBrand, Nav, NavItem, NavLink, NavbarToggler, Collapse } from 'reactstrap';
+import { Button, Form, FormGroup, Label, Input, FormText, FormFeedback } from 'reactstrap';
+import { Container, Row, Col } from 'reactstrap';
+import { Media } from 'reactstrap';
+import { Link } from 'react-router';
+import { Token, Market, DMR, Vehicle, web3 } from './Contracts';
+
+import 'bootstrap/dist/css/bootstrap.css';
+import 'font-awesome/css/font-awesome.min.css'
 import './App.css';
 
-/* Ethereum web3 library */
-import Web3 from 'web3'
+export class App extends Component {
 
-/* Contracts */
-import Token from '../../build/contracts/HumanStandardToken.sol.js';
-import Market from '../../build/contracts/StandardMarketplace.sol.js';
-import DMR from '../../build/contracts/DMR.sol.js';
-import Vehicle from '../../build/contracts/Vehicle.sol.js';
+    constructor(props) {
+        super(props);
 
-var web3;
-var sequence = arr => arr.reduce((p, fn) => p.then(fn), Promise.resolve());
-var all = arr => Promise.all(arr);
-
-class App extends Component {
-
-    constructor(props){
-        super(props)
+        this.toggleNavbar = this.toggleNavbar.bind(this);
         this.state = {
-            balance: "Updating...",
-            allowance: "Updating...",
-            cars: "Updating..."
-        }
+            collapsed: true
+        };
     }
 
-    componentWillMount() {
-
-
-        if (typeof web3 !== 'undefined') {
-            web3 = new Web3(web3.currentProvider);
-        } else {
-            // set the provider you want from Web3.providers
-            web3 = new Web3(new Web3.providers.HttpProvider("http://localhost:8545"));
-        }
-
-        Vehicle.setProvider(web3.currentProvider);
-        Token.setProvider(web3.currentProvider);
-        DMR.setProvider(web3.currentProvider);
-        Market.setProvider(web3.currentProvider);
-
-        var acc = web3.eth.coinbase;
-        var other = web3.eth.accounts[1];
-        var token = Token.deployed();
-        var dmr = DMR.deployed();
-        var market = Market.deployed();
-
-        token.balanceOf.call(acc).then(i => {
-            this.setState({
-                balance: i.toNumber()
-            });
-        })
-
-        /* Function for displaying the number of cars */
-        let updateCars = () => dmr.getVehicles().then(arr => this.setState({
-            cars: arr.length
-        }));
-
-        dmr.issueVehicle("Car" + Math.random(), { from:  acc });
-
-        updateCars();
-        dmr.VehicleIssued().watch(() => updateCars());
-
-        dmr.VehicleIssued().watch((err,r) => {
-
-            let car = Vehicle.at(r.args.addr);
-            car.authorizeMarket(market.address, { from: acc }).then(() => {
-                market.extendOffer(car.address, other, 0, { from: acc }).then(() => {
-                    market.acceptOffer(car.address, { from: other }).then(() => {
-                        market.completeTransaction(car.address, { from: other });
-                    }).catch((e) => {});
-                }).catch((e) => {});
-            }).catch((e) => {});
+    toggleNavbar() {
+        this.setState({
+            collapsed: !this.state.collapsed
         });
-
-        market.BuyerCompletedTransaction().watch((err,r) => {
-            console.log("Sale completed!");
-        });
-
     }
 
     render() {
         return (
-            <div className="App">
-            <div className="App-header">
-            <img src={logo} className="App-logo" alt="logo" />
-            <h2>Welcome to React</h2>
+            <Container>
+            <div className="header clearfix">
+            <Navbar light>
+            <Link to={'/'} className="navbar-brand">Danish Motor Register</Link>
+            <Nav className="float-xs-right" navbar>
+            <NavItem>
+            <Link to={'register'} activeClassName="active" className="nav-link">Register</Link>
+            </NavItem>
+            <NavItem>
+            <Link to={'search'} activeClassName="active" className="nav-link">Search</Link>
+            </NavItem>
+            <NavItem>
+            <Link to={'cars'} activeClassName="active" className="nav-link">Your cars</Link>
+            </NavItem>
+            </Nav>
+            </Navbar>
             </div>
-            <p className="App-intro">
-            To get started, edit <code>src/App.js</code> and save to reload.
-            </p>
-            <p>
-            Balance is {this.state.balance}
-            </p>
-            <p>
-            Allowance is {this.state.allowance}
-            </p>
-            <p>
-            Cars: {String(this.state.cars)}
-            </p>
-            </div>
+            <Container fluid className="content">
+            {this.props.children}
+            </Container>
+            <footer className="footer">
+            <p>© IT University at Copenhagen 2016</p>
+            </footer>
+            </Container>
         );
     }
 }
-
-export default App;

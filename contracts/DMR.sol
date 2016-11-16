@@ -2,12 +2,12 @@ import "Tradeable.sol";
 
 contract Vehicle is Tradeable {
 
-    string public plate;
+    string public vin;
     address public issuer;
 
-    function Vehicle(string _plate) {
+    function Vehicle(string _vin) {
         issuer = msg.sender;
-        plate = _plate;
+        vin = _vin;
     }
 }
 
@@ -16,22 +16,26 @@ contract DMR  {
     event VehicleIssued(address addr);
 
     address[] private vehicles;
+    uint private lastPlate = 0;
     mapping(string => address) private index;
+    mapping(uint => address) private licensePlates;
 
-    function issueVehicle(string _plate) returns(address) {
+    function issueVehicle(string _vin) returns(address) {
 
         /* Check of the plate number is already in use */
-        if(index[_plate] != address(0x0)) throw;
+        if(index[_vin] != address(0x0)) throw;
 
         /* Creating the new vehicle */
-        var vehicle = new Vehicle(_plate);
+        var vehicle = new Vehicle(_vin);
 
         /* Transferring the ownership to caller */
         vehicle.transferOwnership(msg.sender);
 
         /* Registering the car */
         vehicles.push(address(vehicle));
-        index[_plate] = address(vehicle);
+        index[_vin] = address(vehicle);
+        lastPlate = lastPlate + 1;
+        licensePlates[lastPlate] = address(vehicle);
 
         /* Fireing event */
         VehicleIssued(address(vehicle));
@@ -39,8 +43,12 @@ contract DMR  {
     }
 
     /* Search for registered vehicles */
-    function lookup(string _plate) constant returns(address){
-        return index[_plate];
+    function lookup(uint _plate) constant returns(address){
+        return licensePlates[_plate];
+    }
+
+    function isVinRegistered(string _vin) constant returns(bool) {
+        return index[_vin] != address(0x0);
     }
 
     /* Get a complete list of all vehicles */

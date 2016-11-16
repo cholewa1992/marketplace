@@ -42,7 +42,7 @@ contract StandardMarketplace is Marketplace {
     isOwnerOf(_item)
     isAuthorizedToSell(_item)
     returns (bool success) {
-        addOffer(_item, Offer({ seller: msg.sender, buyer: _buyer, amount: _price, accepted: false}));
+        addOffer(_item, Offer({ seller: msg.sender, buyer: _buyer, amount: _price, state: OfferStates.Extended}));
         SellerAddedOffer(_item);
         return true;
     }
@@ -51,7 +51,7 @@ contract StandardMarketplace is Marketplace {
         var offer = offers[_item];
 
         /* Offer can only be accepted once */
-        if(offer.accepted) return false;
+        if(offer.state != OfferStates.Extended) return false;
 
         if(offer.amount > 0){
             /* Check if the buyer have sufficient funds */
@@ -63,7 +63,7 @@ contract StandardMarketplace is Marketplace {
         }
 
         /* Accept the offer */
-        offer.accepted = true;
+        offer.state = OfferStates.Accepted;
         BuyerAcceptedOffer(_item);
 
         return true;
@@ -72,13 +72,12 @@ contract StandardMarketplace is Marketplace {
     function revokeOffer(Tradeable _item) isOwnerOf(_item) returns (bool success) {
         var offer = offers[_item];
 
-        if(offer.accepted) {
+        if(offer.state == OfferStates.Accepted) { 
             /* transferring all locked funds back to the buyer */
             var amount = balance[_item][offer.buyer];
             balance[_item][offer.buyer] = 0;
             if(!token.transfer(offer.buyer, amount)) throw;
         }
-
 
         /* Revoke offer */
         SellerRevokedOffer(_item);
@@ -94,7 +93,7 @@ contract StandardMarketplace is Marketplace {
         var offer = offers[_item];
 
         /* Can only complete the transaction if the offer was accepted */
-        if(!offer.accepted) return false;
+        if(offer.state != OfferStates.Accepted) return false;
 
         if(offer.amount > 0){
             /* The buyer must have sufficient funds */
@@ -119,7 +118,7 @@ contract StandardMarketplace is Marketplace {
         var offer = offers[_item];
 
         /* Can only abort the transaction if the offer was accepted */
-        if(!offer.accepted) return false;
+        if(offer.state != OfferStates.Accepted) return false;
 
         /* Transferring all locked funds back to the buyer */
         var amount = balance[_item][offer.buyer];
@@ -133,22 +132,23 @@ contract StandardMarketplace is Marketplace {
         return true;
     }
 
-    function addOffer(Tradeable _item, Offer _offer) private {
+    function addOffer(Tradeable _item, Offer _offer) internal {
 
         offers[_item] = _offer;
     }
 
-    function removeOffer(Tradeable _item, Offer _offer) private {
+    function removeOffer(Tradeable _item, Offer _offer) internal {
 
         delete offers[_item];
 
     }
 
+    enum OfferStates { Extended, Accepted }
     struct Offer {
         address seller;
         address buyer;
         uint amount; //The purchase cost
-        bool accepted; //Whether or not the offer is accepted
+        OfferStates state; //Whether or not the offer is accepted
     }
 
     /* Ether can't be transferred to this account */
@@ -164,7 +164,7 @@ contract IndexedMarketplace is StandardMarketplace {
 
     }
 
-    function addOffer(Tradeable _item, Offer _offer) private {
+    function addOffer(Tradeable _item, Offer _offer) internal {
 
         int256 index = -1;  // Index of the item
         int256 free = -1;   // Index of first free slot in indexes
@@ -194,7 +194,7 @@ contract IndexedMarketplace is StandardMarketplace {
 
     }
 
-    function removeOffer(Tradeable _item, Offer _offer) private {
+    function removeOffer(Tradeable _item, Offer _offer) internal {
 
         for(uint i = 0; i < indexes.length; i++){
             if(indexes[i] == address(_item)) {

@@ -117,7 +117,7 @@ contract("StandardMarketplace", accounts => {
 
                 async(market.offers.call(
                     tradeable.address   // item address
-                )).then(o => o[3]).should.eventually.equal(false)
+                )).then(o => o[3].c[0]).should.eventually.equal(0)
 
             ])
         })
@@ -257,7 +257,7 @@ contract("StandardMarketplace", accounts => {
                 /* Asserting that the offer was accepted */
                 async(market.offers.call(
                     tradeable.address   // item address
-                )).then(o => o[3]).should.eventually.equal(true),
+                )).then(o => o[3].c[0]).should.eventually.equal(1),
 
                 /* Asserting that the money was withdrawn from the buyer */
                 asyncInt(token.balanceOf(

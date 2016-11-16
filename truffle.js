@@ -1,6 +1,7 @@
 module.exports = {
-  rpc: {
-    host: "localhost",
-    port: 8545
-  }
+    build: "npm build",
+    rpc: {
+        host: "localhost",
+        port: 8545
+    }
 };
