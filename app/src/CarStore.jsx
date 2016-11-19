@@ -1,71 +1,115 @@
-import { Token, Market, DMR, Vehicle, Eth } from './Contracts';
+//import Token from '../../build/contracts/HumanStandardToken.sol.js';
+import Web3 from 'web3';
+import Market from '../../build/contracts/IndexedMarketplace.sol.js';
+import DMR from '../../build/contracts/DMR.sol.js';
+import Vehicle from '../../build/contracts/Vehicle.sol.js';
 
-let _cars = {};
-let _initCalled = false
-let _changeListeners = []
-let dmr = DMR.deployed();
-let market = Market.deployed();
+let instance = null;
 
-const CarStore = {
+export default class CarStore{
 
-    init: () => {
-        if(_initCalled){
-            return;
-        }
+    constructor(){
+        if(instance == null) instance = this;
+        return instance;
+    }
+
+    init(web3) {
+
+        this.cars = {};
+        this.changeListeners = [];
+
+        DMR.setProvider(web3.currentProvider);
+        Market.setProvider(web3.currentProvider);
+        Vehicle.setProvider(web3.currentProvider);
+
+        this.market = Market.deployed();
+        this.dmr = DMR.deployed();
+        this.acc = web3.eth.defaultAccount;
+        this.isAccount = Web3.isAccount;
+        this.nullAddress = "0x0000000000000000000000000000000000000000";
+
+
+        this.isAddress = function (address) {
+            if (!/^(0x)?[0-9a-f]{40}$/i.test(address)) {
+                // check if it has the basic requirements of an address
+                return false;
+            } else if (/^(0x)?[0-9a-f]{40}$/.test(address) || /^(0x)?[0-9A-F]{40}$/.test(address)) {
+                // If it's all small caps or all all caps, return true
+                return true;
+            } else {
+                // Otherwise check each case
+                return isChecksumAddress(address);
+            }
+        };
+
+        /**
+         * Checks if the given string is a checksummed address
+         *
+         * @method isChecksumAddress
+         * @param {String} address the given HEX adress
+         * @return {Boolean}
+         */
+        var isChecksumAddress = function (address) {
+            // Check each case
+            address = address.replace('0x','');
+            var addressHash = web3.sha3(address.toLowerCase());
+            for (var i = 0; i < 40; i++ ) {
+                // the nth letter should be uppercase if the nth digit of casemap is 1
+                if ((parseInt(addressHash[i], 16) > 7 && address[i].toUpperCase() !== address[i]) || (parseInt(addressHash[i], 16) <= 7 && address[i].toLowerCase() !== address[i])) {
+                    return false;
+                }
+            }
+            return true;
+        };
+
+        if(this.acc === undefined)
+            this.acc = web3.eth.defaultAccount =  web3.eth.accounts[1];
 
         Promise.all([
-            CarStore.fetchAllCars(),
-            CarStore.fetchOfferedCars()
+            this.fetchAllCars(),
+            this.fetchOfferedCars()
         ]).then(() => {
-            market.BuyerAcceptedOffer({fromBlock: "latest"}).watch((err,e) => {
-                CarStore.fetchCar(e.args["item"]);
-                CarStore.notifyChange()
+            this.market.BuyerAcceptedOffer({fromBlock: "latest"}).watch((err,e) => {
+                this.fetchCar(e.args["item"]).then(() => this.notifyChange());
             });
 
-            market.SellerAddedOffer({fromBlock: "latest"}).watch((err,e) => {
-                console.log("event!");
-                CarStore.fetchCar(e.args["item"]).then(() => CarStore.notifyChange());
+            this.market.SellerAddedOffer({fromBlock: "latest"}).watch((err,e) => {
+                this.fetchCar(e.args["item"]).then(() => this.notifyChange());
             });
 
-            market.SellerRevokedOffer({fromBlock: "latest"}).watch((err,e) => {
-                CarStore.fetchCar(e.args["item"]).then(() => CarStore.notifyChange());
+            this.market.SellerRevokedOffer({fromBlock: "latest"}).watch((err,e) => {
+                this.fetchCar(e.args["item"]).then(() => this.notifyChange());
             });
 
-            market.BuyerCompletedTransaction({fromBlock: "latest"}).watch((err,e) => {
-                CarStore.fetchCar(e.args["item"]).then(() => CarStore.notifyChange());
+            this.market.BuyerCompletedTransaction({fromBlock: "latest"}).watch((err,e) => {
+                this.fetchCar(e.args["item"]).then(() => this.notifyChange());
             });
 
-            market.BuyerAbortedTransaction({fromBlock: "latest"}).watch((err,e) => {
-                CarStore.fetchCar(e.args["item"]).then(() => CarStore.notifyChange());
-            });
-
-            dmr.VehicleIssued({fromBlock: "latest"}).watch((err,e) => {
-                CarStore.fetchAllCars();
-            });
         });
-    },
+    }
 
-    fetchAllCars: () => {
-        return dmr.getVehiclesOwnedBy(Eth.acc).then(cars => {
+
+
+    fetchAllCars() {
+        return this.dmr.getVehiclesOwnedBy(this.acc).then(cars => {
             let arr = [];
 
             cars.forEach(car => {
-                arr.push(CarStore.fetchCar(car));
+                arr.push(this.fetchCar(car));
             })
 
             Promise.all(arr).then(() => {
-                console.log(_cars);
-                CarStore.notifyChange();
+                this.notifyChange();
             })
         })
-    },
+    }
 
-    fetchCar: address => {
+    fetchCar(address) {
         return Promise.all([
             address,
             Vehicle.at(address).vin.call(),
             Vehicle.at(address).owner.call(),
-            market.offers.call(address)
+            this.market.offers.call(address)
         ]).then(car => {
             let r = ({
                 brand: 'BMW',
@@ -78,79 +122,104 @@ const CarStore = {
                 owner: car[2],
                 buyer: car[3][1],
                 amount: car[3][2].c[0],
-                state: car[3][1] == Eth.nullAddress
+                state: car[3][1] == this.nullAddress
                 ? 'initial'
-                : car[3][3].c[0] == 1 ?  'accepted' : 'extended'
+                : car[3][3].c[0] === 1 ?  'accepted' : 'extended'
             })
-            _cars[r.vin] = r;
+            this.cars[r.vin] = r;
         });
-    },
+    }
 
-    fetchOfferedCars: () => {
-        return market.getItemsOfferedTo(Eth.acc).then(cars => {
+    fetchOfferedCars() {
+        return this.market.getItemsOfferedTo(this.acc).then(cars => {
             let arr = [];
 
             cars.forEach(car => {
-                arr.push(CarStore.fetchCar(car));
+                arr.push(this.fetchCar(car));
             })
 
             Promise.all(arr).then(() => {
-                console.log(_cars);
-                CarStore.notifyChange();
+                this.notifyChange();
             })
-        })
-    },
-
-    extendOffer: (car, buyer, amount) => {
-
-        let market = Market.deployed();
-        return Vehicle.at(car).isAuthorizedToSell.call(market.address).then(result => {
-            var arr = [];
-            if(!result) arr.push(Vehicle.at(car).authorizeMarket(market.address, {from: Eth.acc}));
-            arr.push(market.extendOffer(
-                car,
-                buyer,
-                amount,
-                {from: Eth.acc})
-            );
-            return Promise.all(arr);
-        });
-    },
-
-    revokeOffer: car => {
-        let market = Market.deployed();
-        return market.revokeOffer(car, {from: Eth.acc});
-    },
-
-    getCar: id => {
-        return _cars[id];
-    },
-
-    getCars: () => {
-        const array = []
-
-        for (const id in _cars)
-            array.push(_cars[id])
-
-        return array
-    },
-
-    notifyChange: () => {
-        _changeListeners.forEach(function (listener) {
-            listener()
-        })
-    },
-
-    addChangeListener: listener => {
-        _changeListeners.push(listener)
-    },
-
-    removeChangeListener: listener => {
-        _changeListeners = _changeListeners.filter(function (l) {
-            return listener !== l
         })
     }
 
-}
+    extendOffer(car, buyer, amount) {
 
-export default CarStore
+        return Vehicle.at(car).isAuthorizedToSell.call(this.market.address).then(result => {
+            var arr = [];
+            if(!result) arr.push(Vehicle.at(car).authorizeMarket(this.market.address, { from: this.acc }));
+            arr.push(this.market.extendOffer(
+                car,
+                buyer,
+                amount,
+                { from: this.acc }
+            ));
+            return Promise.all(arr);
+        });
+    }
+
+    revokeOffer(car) {
+        return this.market.revokeOffer(car, { from: this.acc });
+    }
+
+    getCar(id) {
+        return this.cars[id];
+    }
+
+    getCars() {
+        const array = []
+
+        for (const id in this.cars)
+            array.push(this.cars[id])
+
+        return array
+    }
+
+    isVinValid(vin){
+        function transliterate (c) {
+            return '0123456789.ABCDEFGH..JKLMN.P.R..STUVWXYZ'.indexOf(c) % 10;
+        }
+
+        function get_check_digit (vin) {
+            var map = '0123456789X';
+            var weights = '8765432X098765432';
+            var sum = 0;
+            for (var i = 0; i < 17; ++i)
+                sum += transliterate(vin[i]) * map.indexOf(weights[i]);
+            return map[sum % 11];
+        }
+
+        function validate (vin) {
+            if (vin.length !== 17) return false;
+            return get_check_digit(vin) === vin[8];
+        }
+
+        return validate(vin);
+    }
+
+    isVinRegistered(vin) {
+        return this.dmr.isVinRegistered(vin);
+
+    }
+
+    issueVehicle(vin) {
+        return this.dmr.issueVehicle(vin, { from: this.acc });
+    }
+
+    notifyChange() {
+        this.changeListeners.forEach(function (listener) {
+            listener()
+        })
+    }
+
+    addChangeListener(listener) {
+        this.changeListeners.push(listener)
+    }
+
+    removeChangeListener(listener) {
+        this.changeListeners = this.changeListeners.filter(function (l) {
+            return listener !== l
+        })
+    }
+}

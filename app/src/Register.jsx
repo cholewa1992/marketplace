@@ -7,7 +7,7 @@ import { Button, Form, FormGroup, Label, Input, FormText, FormFeedback } from 'r
 import { Container, Row, Col } from 'reactstrap';
 import { Media } from 'reactstrap';
 import { Link } from 'react-router';
-import { Token, Market, DMR, Vehicle, Eth } from './Contracts';
+import CarStore from './CarStore'
 
 import 'bootstrap/dist/css/bootstrap.css';
 import 'font-awesome/css/font-awesome.min.css'
@@ -17,6 +17,8 @@ export class Register extends Component {
     constructor(props) {
         super(props);
 
+        console.log(props.route.web3);
+        this.store = new CarStore(props.route.web3);
         this.state = {
             loading: false,
             vin: {
@@ -31,39 +33,10 @@ export class Register extends Component {
         this.handleSubmit = this.handleSubmit.bind(this);
     }
 
-
-    isVinValid(vin){
-        function transliterate (c) {
-            return '0123456789.ABCDEFGH..JKLMN.P.R..STUVWXYZ'.indexOf(c) % 10;
-        }
-
-        function get_check_digit (vin) {
-            var map = '0123456789X';
-            var weights = '8765432X098765432';
-            var sum = 0;
-            for (var i = 0; i < 17; ++i)
-                sum += transliterate(vin[i]) * map.indexOf(weights[i]);
-            return map[sum % 11];
-        }
-
-        function validate (vin) {
-            if (vin.length !== 17) return false;
-            return get_check_digit(vin) === vin[8];
-        }
-
-       return validate(vin);
-
-    }
-
-    isVinRegistered(vin){
-        let dmr = DMR.deployed();
-        return dmr.isVinRegistered(vin);
-    }
-
     handleChange(event) {
 
         let text = event.target.value;
-        let isValid = this.isVinValid(text);
+        let isValid = this.store.isVinValid(text);
 
         let vin = this.state.vin;
 
@@ -76,14 +49,14 @@ export class Register extends Component {
 
     handleSubmit(event) {
 
-        let dmr = DMR.deployed();
         let vin = this.state.vin;
 
         if(vin.state === 'success'){
-            this.isVinRegistered(this.state.vin.text).then(result => {
+            this.store.isVinRegistered(this.state.vin.text).then(result => {
+                console.log(result);
                 if(!result){
                     this.setState({loading: true});
-                    dmr.issueVehicle(vin.text, {from: Eth.acc}).then(tx => {
+                    this.store.issueVehicle(vin.text).then(tx => {
                         this.setState({loading: false});
                     }).catch(err => {
                         this.setState({loading: false});

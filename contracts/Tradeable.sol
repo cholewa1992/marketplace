@@ -1,21 +1,5 @@
-contract Owned {
-
-    address public owner;
-
-    function Owned() {
-        owner = msg.sender;
-    }
-
-    modifier isOwner {
-        if (msg.sender != owner) throw;
-        _
-    }
-
-    function transferOwnership(address _newOwner) isOwner {
-        owner = _newOwner;
-    }
-
-}
+pragma solidity ^0.4.0;
+import "Owned.sol";
 
 contract Tradeable is Owned {
 
@@ -23,8 +7,8 @@ contract Tradeable is Owned {
     address private market;
 
     /* Modifiers */
-    modifier isMarket() { if(msg.sender == market) _ else throw; }
-    modifier isMarketOrOwner() { if(msg.sender == market || msg.sender == owner) _ else throw; }
+    modifier isMarket() { if(msg.sender == market) _; else throw; }
+    modifier isMarketOrOwner() { if(msg.sender == market || msg.sender == owner) _; else throw; }
 
     /* Methods */
     function authorizeMarket(address _market) public isOwner {

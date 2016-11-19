@@ -6,7 +6,6 @@ import ReactMixin from 'react-mixin';
 import TimerMixin from 'react-timer-mixin';
 
 /* Eth contracts */
-import { Eth } from './Contracts';
 import CarStore from './CarStore'
 
 /* Reactstrap import */
@@ -18,12 +17,14 @@ import { Card, CardImg, CardText, CardBlock, CardTitle,
     CardSubtitle, Button, CardHeader, CardFooter, Tooltip } from 'reactstrap';
 
 
-export class Cars extends Component {
+export default class Cars extends Component {
 
     constructor(props) {
         super(props)
 
-        var cars = CarStore.getCars();
+        this.store = new CarStore();
+        var cars = this.store.getCars();
+
         this.state = {
             cars: cars,
             selected: cars.length > 0 ? cars[0] : null
@@ -34,16 +35,15 @@ export class Cars extends Component {
     }
 
     componentWillMount() {
-        CarStore.addChangeListener(this.updateCars)
-        CarStore.init();
+        this.store.addChangeListener(this.updateCars)
     }
 
     componentWillUnmount() {
-        CarStore.removeChangeListener(this.updateCars)
+        this.store.removeChangeListener(this.updateCars)
     }
 
     updateCars(){
-        var cars = CarStore.getCars();
+        var cars = this.store.getCars();
         this.setState({
             cars: cars,
             selected: this.state.selected
@@ -60,7 +60,7 @@ export class Cars extends Component {
 
     render() {
 
-        let cars = this.state.cars.filter(car => car.owner == Eth.acc).map(car => (
+        let cars = this.state.cars.filter(car => car.owner == this.store.acc).map(car => (
             <ListGroupItem
             key={car.vin}
             onClick={e => this.handleSelect(car)}
@@ -72,7 +72,7 @@ export class Cars extends Component {
             </ListGroupItem>
         ));
 
-        let offers = this.state.cars.filter(car => car.buyer == Eth.acc).map(car => (
+        let offers = this.state.cars.filter(car => car.buyer == this.store.acc).map(car => (
             <ListGroupItem
             key={car.vin}
             onClick={e => this.handleSelect(car)}
@@ -115,6 +115,7 @@ class Car extends Component {
     constructor(props) {
         super(props)
 
+        this.store = new CarStore();
         this.state = this.getStateFromStore();
         this.state.tooltipOpen = false;
 
@@ -124,7 +125,7 @@ class Car extends Component {
 
     getStateFromStore(props) {
         const  id  = props ? props.id: this.props.id;
-        return { car: CarStore.getCar(id) };
+        return { car: this.store.getCar(id) };
     }
 
     componentWillReceiveProps(nextProps) {
@@ -132,11 +133,11 @@ class Car extends Component {
     }
 
     componentDidMount() {
-        CarStore.addChangeListener(this.updateCar)
+        this.store.addChangeListener(this.updateCar)
     }
 
     componentWillUnmount() {
-        CarStore.removeChangeListener(this.updateCar)
+        this.store.removeChangeListener(this.updateCar)
     }
 
     updateCar(){
@@ -187,7 +188,7 @@ class Car extends Component {
             </dl>
             </CardBlock>
             <CardFooter className='text-xs-right'>
-            {(this.state.car.buyer == Eth.acc && this.state.car.state === 'extended') &&
+            {(this.state.car.buyer == this.store.acc && this.state.car.state === 'extended') &&
             <Button color='primary'>Accept</Button>}{' '}
             { this.state.car.state === 'initial' &&
             <SellModal car={this.state.car}/>}{' '}
@@ -257,6 +258,7 @@ class SellModal extends React.Component {
     constructor(props) {
         super(props);
 
+        this.store = new CarStore();
         this.state = {
             modal: false,
             loading: false,
@@ -282,7 +284,7 @@ class SellModal extends React.Component {
         let buyer = this.state.buyer;
         let amount = this.state.amount;
 
-       CarStore.extendOffer(car, buyer, amount).then(() => {
+       this.store.extendOffer(car, buyer, amount).then(() => {
             this.setTimeout(() => {
                 this.setState({loading: false});
                 this.toggle();
@@ -295,10 +297,9 @@ class SellModal extends React.Component {
         });
     }
 
-
     isValidBuyer(address){
         if(address == '') return '';
-        return Eth.isAddress(address) ? 'success' : 'warning';
+        return this.store.isAddress(address) ? 'success' : 'warning';
     }
 
     isValidAmount(amount){
@@ -308,7 +309,7 @@ class SellModal extends React.Component {
 
     buyerFeedback(state){
         if(state != 'success' && state != '')
-            return 'The inputet address is not valid (' + Eth.acc + ")";
+            return 'The inputet address is not valid (' + this.store.acc + ")";
     }
 
     render() {
@@ -321,8 +322,8 @@ class SellModal extends React.Component {
             <CustomInput
             id="buyer"
             label="Buyer"
-            validator={this.isValidBuyer}
-            feedback={this.buyerFeedback}
+            validator={address => this.isValidBuyer(address)}
+            feedback={state => this.buyerFeedback(state)}
             placeholder="The buyers address"
             onChange={value => this.setState({buyer: value})}
             />
@@ -357,6 +358,7 @@ class RevokeModal extends React.Component {
     constructor(props) {
         super(props);
 
+        this.store = new CarStore();
         this.state = {
             modal: false,
             loading: false,
@@ -376,7 +378,7 @@ class RevokeModal extends React.Component {
         this.setState({loading: true});
         let car = this.props.car.address;
 
-       CarStore.revokeOffer(car).then(() => {
+       this.store.revokeOffer(car).then(() => {
             this.setTimeout(() => {
                 this.setState({loading: false});
                 this.toggle();
@@ -416,6 +418,3 @@ class RevokeModal extends React.Component {
     }
 }
 ReactMixin.onClass(RevokeModal, TimerMixin);
-
-export default Cars
-
