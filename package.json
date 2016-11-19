@@ -1,28 +1,35 @@
 {
     "name": "marketplace",
-    "main": "truffle.js",
     "version": "0.0.1",
-
     "repository" :
     {
         "type" : "git",
         "url" : "https://github.com/cholewa1992/market.git"
     },
-
-    "scripts": {
-        "install": "make build",
-        "test": "make test"
-    },
-
-    "dependencies": {
-        "truffle": "*"
-    },
-
     "devDependencies": {
+        "react-scripts": "0.6.1",
         "chai": "*",
         "chai-as-promised": "*",
         "chai-bignumber": "*",
         "chai-spies": "*",
         "ethereumjs-testrpc": "*"
+    },
+    "dependencies": {
+        "ether-pudding": "^3.2.0",
+        "react": "^15.3.2",
+        "react-dom": "^15.3.2",
+        "w3.js": "^1.0.5",
+        "truffle": "*"
+    },
+    "scripts": {
+        "start": "react-scripts start",
+        "build": "react-scripts build",
+        "test": "react-scripts test --env=jsdom",
+        "eject": "react-scripts eject"
+    },
+    "standards": {
+        "globals": [
+            "web3"
+        ]
     }
 }
