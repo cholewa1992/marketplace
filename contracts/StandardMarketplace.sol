@@ -25,7 +25,8 @@ contract StandardMarketplace is Marketplace {
     isOwnerOf(_item)
     isAuthorizedToSell(_item)
     returns (bool success) {
-        addOffer(_item, Offer({ seller: msg.sender, buyer: _buyer, amount: _price, state: OfferStates.Extended}));
+        if(_price < 0) return false;
+        addOffer(_item, Offer({ seller: msg.sender, buyer: _buyer, amount:_price, state: OfferStates.Extended}));
         SellerAddedOffer(_item);
         return true;
     }
@@ -55,9 +56,9 @@ contract StandardMarketplace is Marketplace {
     function revokeOffer(Tradeable _item) isOwnerOf(_item) returns (bool success) {
         var offer = offers[_item];
 
-        if(offer.state == OfferStates.Accepted) { 
+        var amount = balance[_item][offer.buyer];
+        if(offer.state == OfferStates.Accepted && amount > 0) {
             /* transferring all locked funds back to the buyer */
-            var amount = balance[_item][offer.buyer];
             balance[_item][offer.buyer] = 0;
             if(!token.transfer(offer.buyer, amount)) throw;
         }
@@ -95,7 +96,8 @@ contract StandardMarketplace is Marketplace {
         return true;
     }
 
-    function abortTransaction(Tradeable _item) isBuyerOf(_item) returns (bool success) {
+    function abortTransaction(Tradeable _item) isBuyerOf(_item)
+    returns (bool success) {
 
         /* Getting the offer */
         var offer = offers[_item];
@@ -105,8 +107,10 @@ contract StandardMarketplace is Marketplace {
 
         /* Transferring all locked funds back to the buyer */
         var amount = balance[_item][offer.buyer];
-        balance[_item][offer.buyer] = 0;
-        if(!token.transfer(offer.buyer, amount)) throw;
+        if(amount > 0){
+            balance[_item][offer.buyer] = 0;
+            if(!token.transfer(offer.buyer, amount)) throw;
+        }
 
         /* Cancel sale of the item */
         BuyerAbortedTransaction(_item);

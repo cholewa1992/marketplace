@@ -189,11 +189,15 @@ class Car extends Component {
             </CardBlock>
             <CardFooter className='text-xs-right'>
             {(this.state.car.buyer == this.store.acc && this.state.car.state === 'extended') &&
-            <Button color='primary'>Accept</Button>}{' '}
+            <AcceptModal car={this.state.car}/>}{' '}
             { this.state.car.state === 'initial' &&
             <SellModal car={this.state.car}/>}{' '}
             { this.state.car.state !== 'initial' &&
             <RevokeModal car={this.state.car}/>}{' '}
+            { this.state.car.state === 'accepted' &&
+            <CompleteModal car={this.state.car}/>}{' '}
+            { this.state.car.state === 'accepted' &&
+            <AbortModal car={this.state.car}/>}{' '}
             </CardFooter>
             </Card>
         )
@@ -304,7 +308,7 @@ class SellModal extends React.Component {
 
     isValidAmount(amount){
         if(amount == '') return '';
-        return parseInt(amount) > 0 ? 'success' : 'warning';
+        return parseInt(amount) >= 0 ? 'success' : 'warning';
     }
 
     buyerFeedback(state){
@@ -418,3 +422,201 @@ class RevokeModal extends React.Component {
     }
 }
 ReactMixin.onClass(RevokeModal, TimerMixin);
+
+class AcceptModal extends React.Component {
+    constructor(props) {
+        super(props);
+
+        this.store = new CarStore();
+        this.state = {
+            modal: false,
+            loading: false,
+        };
+
+        this.toggle = this.toggle.bind(this);
+        this.accept = this.accept.bind(this);
+    }
+
+    toggle() {
+        this.setState({
+            modal: !this.state.modal
+        });
+    }
+
+    accept() {
+        this.setState({loading: true});
+        let car = this.props.car.address;
+
+       this.store.acceptOffer(car).then(() => {
+            this.setTimeout(() => {
+                this.setState({loading: false});
+                this.toggle();
+            }, 1000);
+        }).catch(err => {
+            console.log(err)
+            this.setTimeout(() => {
+                this.setState({loading: false});
+            }, 1000);
+        });
+    }
+
+    render() {
+        return (
+            <span>
+            <Button color='success' onClick={this.toggle}>Accept</Button>
+            <Modal isOpen={this.state.modal} toggle={this.toggle} className={this.props.className}>
+            <ModalHeader toggle={this.toggle}>Accept the exteded offer on {this.props.car.plate}.</ModalHeader>
+            <ModalBody>
+            <p>This action will accept the offer extended on this car.</p>
+            If the offer is accepted then <b>{this.props.car.amount} DKK</b> will be transfered from your account.
+            </ModalBody>
+            <ModalFooter>
+            <Button
+            color='primary'
+            onClick={this.accept}
+            disabled={this.state.loading}
+            >
+            {'Continue'}
+            {this.state.loading && <i className="fa fa-spinner fa-spin"></i>}
+            </Button>{' '}
+            <Button color='secondary' onClick={this.toggle}>Cancel</Button>
+            </ModalFooter>
+            </Modal>
+            </span>
+        );
+    }
+}
+ReactMixin.onClass(AcceptModal, TimerMixin);
+
+class CompleteModal extends React.Component {
+    constructor(props) {
+        super(props);
+
+        this.store = new CarStore();
+        this.state = {
+            modal: false,
+            loading: false,
+        };
+
+        this.toggle = this.toggle.bind(this);
+        this.complete = this.complete.bind(this);
+    }
+
+    toggle() {
+        this.setState({
+            modal: !this.state.modal
+        });
+    }
+
+    complete() {
+        this.setState({loading: true});
+        let car = this.props.car.address;
+
+       this.store.completeTransaction(car).then(() => {
+            this.setTimeout(() => {
+                this.setState({loading: false});
+                this.toggle();
+            }, 1000);
+        }).catch(err => {
+            console.log(err)
+            this.setTimeout(() => {
+                this.setState({loading: false});
+            }, 1000);
+        });
+    }
+
+    render() {
+        return (
+            <span>
+            <Button color='success' onClick={this.toggle}>Complete</Button>
+            <Modal isOpen={this.state.modal} toggle={this.toggle} className={this.props.className}>
+            <ModalHeader toggle={this.toggle}>Complete the transaction for {this.props.car.plate}.</ModalHeader>
+            <ModalBody>
+            <p>This action will complete the transaction on the car.</p>
+            <p>Upon completion <b>{this.props.car.amount} DKK</b> will be transfered to the seller and the ownership of the car will be transfered to you.</p>
+            </ModalBody>
+            <ModalFooter>
+            <Button
+            color='primary'
+            onClick={this.complete}
+            disabled={this.state.loading}
+            >
+            {'Continue'}
+            {this.state.loading && <i className="fa fa-spinner fa-spin"></i>}
+            </Button>{' '}
+            <Button color='secondary' onClick={this.toggle}>Cancel</Button>
+            </ModalFooter>
+            </Modal>
+            </span>
+        );
+    }
+}
+ReactMixin.onClass(CompleteModal, TimerMixin);
+
+class AbortModal extends React.Component {
+    constructor(props) {
+        super(props);
+
+        this.store = new CarStore();
+        this.state = {
+            modal: false,
+            loading: false,
+        };
+
+        this.toggle = this.toggle.bind(this);
+        this.abort = this.abort.bind(this);
+    }
+
+    toggle() {
+        this.setState({
+            modal: !this.state.modal
+        });
+    }
+
+    abort() {
+        this.setState({loading: true});
+        let car = this.props.car.address;
+
+        console.log(this.props.car);
+
+       this.store.abortTransaction(car).then(() => {
+            this.setTimeout(() => {
+                this.setState({loading: false});
+                this.toggle();
+            }, 1000);
+        }).catch(err => {
+            console.log(err)
+            this.setTimeout(() => {
+                this.setState({loading: false});
+            }, 1000);
+        });
+    }
+
+    render() {
+        return (
+            <span>
+            <Button color='danger' onClick={this.toggle}>Abort</Button>
+            <Modal isOpen={this.state.modal} toggle={this.toggle} className={this.props.className}>
+            <ModalHeader toggle={this.toggle}>Abort transaction on {this.props.car.plate}</ModalHeader>
+            <ModalBody>
+            <p>This action will abort the transaction on the car.</p>
+            <p>The frozen assests (<b>{this.props.car.amount} DKK</b>) will be returned to you.</p>
+            </ModalBody>
+            <ModalFooter>
+            <Button
+            color='primary'
+            onClick={this.abort}
+            disabled={this.state.loading}
+            >
+            {'Continue'}
+            {this.state.loading && <i className="fa fa-spinner fa-spin"></i>}
+            </Button>{' '}
+            <Button color='secondary' onClick={this.toggle}>Cancel</Button>
+            </ModalFooter>
+            </Modal>
+            </span>
+        );
+    }
+}
+ReactMixin.onClass(AbortModal, TimerMixin);
+

@@ -17,8 +17,7 @@ export class Register extends Component {
     constructor(props) {
         super(props);
 
-        console.log(props.route.web3);
-        this.store = new CarStore(props.route.web3);
+        this.store = new CarStore();
         this.state = {
             loading: false,
             vin: {
@@ -53,7 +52,6 @@ export class Register extends Component {
 
         if(vin.state === 'success'){
             this.store.isVinRegistered(this.state.vin.text).then(result => {
-                console.log(result);
                 if(!result){
                     this.setState({loading: true});
                     this.store.issueVehicle(vin.text).then(tx => {

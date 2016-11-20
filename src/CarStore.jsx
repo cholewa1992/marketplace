@@ -1,8 +1,8 @@
 //import Token from '../../build/contracts/HumanStandardToken.sol.js';
 import Web3 from 'web3';
-import Market from '../../build/contracts/IndexedMarketplace.sol.js';
-import DMR from '../../build/contracts/DMR.sol.js';
-import Vehicle from '../../build/contracts/Vehicle.sol.js';
+import Market from '../build/contracts/IndexedMarketplace.sol.js';
+import DMR from '../build/contracts/DMR.sol.js';
+import Vehicle from '../build/contracts/Vehicle.sol.js';
 
 let instance = null;
 
@@ -22,10 +22,20 @@ export default class CarStore{
         Market.setProvider(web3.currentProvider);
         Vehicle.setProvider(web3.currentProvider);
 
+        this.web3 = web3;
         this.market = Market.deployed();
         this.dmr = DMR.deployed();
         this.acc = web3.eth.defaultAccount;
-        this.isAccount = Web3.isAccount;
+        if(this.acc === undefined)
+            this.acc = web3.eth.defaultAccount = web3.eth.accounts[0];
+
+        console.log(this.web3.eth.getBlock("latest"));
+        /*console.log(this.acc);
+        console.log(web3);
+        console.log(this.dmr);
+        console.log(web3.eth.getBlock("latest"));*/
+
+        //this.isAccount = Web3.isAccount;
         this.nullAddress = "0x0000000000000000000000000000000000000000";
 
 
@@ -104,6 +114,10 @@ export default class CarStore{
         })
     }
 
+    issueVehicle(vin) {
+        return this.dmr.issueVehicle(vin, { from: this.acc, gas: 3400000 });
+    }
+
     fetchCar(address) {
         return Promise.all([
             address,
@@ -121,10 +135,10 @@ export default class CarStore{
                 vin: car[1],
                 owner: car[2],
                 buyer: car[3][1],
-                amount: car[3][2].c[0],
+                amount: car[3][2].toNumber(),
                 state: car[3][1] == this.nullAddress
                 ? 'initial'
-                : car[3][3].c[0] === 1 ?  'accepted' : 'extended'
+                : car[3][3].toNumber() === 1 ?  'accepted' : 'extended'
             })
             this.cars[r.vin] = r;
         });
@@ -148,20 +162,35 @@ export default class CarStore{
 
         return Vehicle.at(car).isAuthorizedToSell.call(this.market.address).then(result => {
             var arr = [];
-            if(!result) arr.push(Vehicle.at(car).authorizeMarket(this.market.address, { from: this.acc }));
+            if(!result) arr.push(Vehicle.at(car).authorizeMarket(this.market.address, { from: this.acc, gas: 3400000 }));
             arr.push(this.market.extendOffer(
                 car,
                 buyer,
                 amount,
-                { from: this.acc }
+                { from: this.acc, gas: 3400000 }
             ));
             return Promise.all(arr);
         });
     }
 
     revokeOffer(car) {
-        return this.market.revokeOffer(car, { from: this.acc });
+        return this.market.revokeOffer(car, { from: this.acc, gas: 3400000 });
     }
+
+    acceptOffer(car) {
+        return this.market.acceptOffer(car, { from: this.acc, gas: 3400000 });
+    }
+
+    completeTransaction(car) {
+        return this.market.completeTransaction(car, { from: this.acc, gas: 3400000 });
+    }
+
+    abortTransaction(car) {
+        console.log(car);
+        console.log(this.acc);
+        return this.market.abortTransaction(car, { from: this.acc, gas: 3400000 });
+    }
+
 
     getCar(id) {
         return this.cars[id];
@@ -201,10 +230,6 @@ export default class CarStore{
     isVinRegistered(vin) {
         return this.dmr.isVinRegistered(vin);
 
-    }
-
-    issueVehicle(vin) {
-        return this.dmr.issueVehicle(vin, { from: this.acc });
     }
 
     notifyChange() {

@@ -149,6 +149,42 @@ contract("StandardMarketplace", accounts => {
             ])
         })
 
+        it("should be possible to extend offer with amount equal zero", () => {
+            return Promise.all([
+
+                async(tradeable.authorizeMarket(
+                    market.address,     // market address
+                    {from: owner}       // executor address
+                )).should.be.fulfilled,
+
+                async(market.extendOffer.call(
+                    tradeable.address,  // item address
+                    buyer,              // buyers address
+                    0,                  // purchase amount
+                    {from: owner}       // executor
+                )).should.eventually.equal(true)
+
+            ])
+        })
+
+        it("should not be possible to extend offer with amount lower than zero", () => {
+            return Promise.all([
+
+                async(tradeable.authorizeMarket(
+                    market.address,     // market address
+                    {from: owner}       // executor address
+                )).should.be.fulfilled,
+
+                async(market.extendOffer.call(
+                    tradeable.address,  // item address
+                    buyer,              // buyers address
+                    -1,                 // purchase amount
+                    {from: owner}       // executor
+                )).should.eventually.equal(false)
+
+            ])
+        })
+
         it("should be possible to revoke offer", () => {
             return Promise.all([
 
