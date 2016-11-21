@@ -88,12 +88,12 @@ export default class Cars extends Component {
             <Row>
             <Col md='4'>
             { offers.length > 0 && (
-            <Card>
-            <CardHeader>Cars offered to you</CardHeader>
-            <ListGroup className='list-group-flush'>
-            {offers}
-            </ListGroup>
-            </Card>
+                <Card>
+                <CardHeader>Cars offered to you</CardHeader>
+                <ListGroup className='list-group-flush'>
+                {offers}
+                </ListGroup>
+                </Card>
             )}
             <Card>
             <CardHeader>Your cars</CardHeader>
@@ -118,6 +118,9 @@ class Car extends Component {
         this.store = new CarStore();
         this.state = this.getStateFromStore();
         this.state.tooltipOpen = false;
+        this.state.allowedToSpend = 0;
+        this.state.authorized = false;
+
 
         this.toggle = this.toggle.bind(this);
         this.updateCar = this.updateCar.bind(this);
@@ -134,6 +137,7 @@ class Car extends Component {
 
     componentDidMount() {
         this.store.addChangeListener(this.updateCar)
+        this.store.allowedToSpend().then(r => this.setState({ allowedToSpend: r }));
     }
 
     componentWillUnmount() {
@@ -188,16 +192,25 @@ class Car extends Component {
             </dl>
             </CardBlock>
             <CardFooter className='text-xs-right'>
+
+            {(this.state.car.owner == this.store.acc && !this.state.car.authorized) &&
+                <AuthorizeModal car={this.state.car}/>}{' '}
+
             {(this.state.car.buyer == this.store.acc && this.state.car.state === 'extended') &&
-            <AcceptModal car={this.state.car}/>}{' '}
-            { this.state.car.state === 'initial' &&
-            <SellModal car={this.state.car}/>}{' '}
-            { this.state.car.state !== 'initial' &&
-            <RevokeModal car={this.state.car}/>}{' '}
-            { this.state.car.state === 'accepted' &&
-            <CompleteModal car={this.state.car}/>}{' '}
-            { this.state.car.state === 'accepted' &&
-            <AbortModal car={this.state.car}/>}{' '}
+                <AcceptModal car={this.state.car}/>}{' '}
+
+            {(this.state.car.authorized && this.state.car.owner == this.store.acc && this.state.car.state === 'initial') &&
+                <SellModal car={this.state.car}/>}{' '}
+
+            {(this.state.car.owner == this.store.acc &&  this.state.car.state !== 'initial') &&
+                <RevokeModal car={this.state.car}/>}{' '}
+
+            {(this.state.car.buyer == this.store.acc &&  this.state.car.state === 'accepted') &&
+                <CompleteModal car={this.state.car}/>}{' '}
+
+            {(this.state.car.buyer == this.store.acc &&  this.state.car.state === 'accepted') &&
+                <AbortModal car={this.state.car}/>}{' '}
+
             </CardFooter>
             </Card>
         )
@@ -288,7 +301,7 @@ class SellModal extends React.Component {
         let buyer = this.state.buyer;
         let amount = this.state.amount;
 
-       this.store.extendOffer(car, buyer, amount).then(() => {
+        this.store.extendOffer(car, buyer, amount).then(() => {
             this.setTimeout(() => {
                 this.setState({loading: false});
                 this.toggle();
@@ -382,7 +395,7 @@ class RevokeModal extends React.Component {
         this.setState({loading: true});
         let car = this.props.car.address;
 
-       this.store.revokeOffer(car).then(() => {
+        this.store.revokeOffer(car).then(() => {
             this.setTimeout(() => {
                 this.setState({loading: false});
                 this.toggle();
@@ -447,7 +460,7 @@ class AcceptModal extends React.Component {
         this.setState({loading: true});
         let car = this.props.car.address;
 
-       this.store.acceptOffer(car).then(() => {
+        this.store.acceptOffer(car).then(() => {
             this.setTimeout(() => {
                 this.setState({loading: false});
                 this.toggle();
@@ -512,7 +525,7 @@ class CompleteModal extends React.Component {
         this.setState({loading: true});
         let car = this.props.car.address;
 
-       this.store.completeTransaction(car).then(() => {
+        this.store.completeTransaction(car).then(() => {
             this.setTimeout(() => {
                 this.setState({loading: false});
                 this.toggle();
@@ -579,7 +592,7 @@ class AbortModal extends React.Component {
 
         console.log(this.props.car);
 
-       this.store.abortTransaction(car).then(() => {
+        this.store.abortTransaction(car).then(() => {
             this.setTimeout(() => {
                 this.setState({loading: false});
                 this.toggle();
@@ -601,11 +614,80 @@ class AbortModal extends React.Component {
             <ModalBody>
             <p>This action will abort the transaction on the car.</p>
             <p>The frozen assests (<b>{this.props.car.amount} DKK</b>) will be returned to you.</p>
+                </ModalBody>
+                <ModalFooter>
+                <Button
+                color='primary'
+                onClick={this.abort}
+                disabled={this.state.loading}
+                >
+                {'Continue'}
+                {this.state.loading && <i className="fa fa-spinner fa-spin"></i>}
+                </Button>{' '}
+                <Button color='secondary' onClick={this.toggle}>Cancel</Button>
+                </ModalFooter>
+                </Modal>
+                </span>
+            );
+    }
+}
+ReactMixin.onClass(AbortModal, TimerMixin);
+
+class AllowModal extends React.Component {
+    constructor(props) {
+        super(props);
+
+        this.store = new CarStore();
+        this.state = {
+            modal: false,
+            loading: false,
+            symbol: "",
+            balance: 0
+        };
+
+        this.toggle = this.toggle.bind(this);
+        this.allow= this.allow.bind(this);
+    }
+
+    componentDidMount() {
+        this.store.tokenSymbol().then(s => this.setState({ symbol: s }));
+        this.store.balance().then(b => this.setState({ balance: b }));
+    }
+
+    toggle() {
+        this.setState({
+            modal: !this.state.modal
+        });
+    }
+
+    allow() {
+        this.setState({loading: true});
+        this.store.allowSpending(this.props.car.amount).then(() => {
+            this.setTimeout(() => {
+                this.setState({loading: false});
+                this.toggle();
+            }, 1000);
+        }).catch(err => {
+            console.log(err)
+            this.setTimeout(() => {
+                this.setState({loading: false});
+            }, 1000);
+        });
+    }
+
+    render() {
+        return (
+            <span>
+            <Button color='secondary' onClick={this.toggle}>Allow</Button>
+            <Modal isOpen={this.state.modal} toggle={this.toggle} className={this.props.className}>
+            <ModalHeader toggle={this.toggle}>Allow this market to withdraw from your account.</ModalHeader>
+            <ModalBody>
+            <p>This action will allow this market to withdraw {this.props.car.amount} {this.state.symbol} ( Total balance: {this.state.balance} {this.state.symbol}) from your account. You have to allow the market to withdraw money from your account in order to accept offers on cars.</p>
             </ModalBody>
             <ModalFooter>
             <Button
             color='primary'
-            onClick={this.abort}
+            onClick={this.allow}
             disabled={this.state.loading}
             >
             {'Continue'}
@@ -618,5 +700,74 @@ class AbortModal extends React.Component {
         );
     }
 }
-ReactMixin.onClass(AbortModal, TimerMixin);
+ReactMixin.onClass(AllowModal, TimerMixin);
+
+class AuthorizeModal extends React.Component {
+    constructor(props) {
+        super(props);
+
+        this.store = new CarStore();
+        this.state = {
+            modal: false,
+            loading: false,
+            symbol: "",
+            balance: 0
+        };
+
+        this.toggle = this.toggle.bind(this);
+        this.allow= this.allow.bind(this);
+    }
+
+    componentDidMount() {
+        this.store.tokenSymbol().then(s => this.setState({ symbol: s }));
+        this.store.balance().then(b => this.setState({ balance: b }));
+    }
+
+    toggle() {
+        this.setState({
+            modal: !this.state.modal
+        });
+    }
+
+    allow() {
+        this.setState({loading: true});
+        this.store.authorizeMarket(this.props.car.address).then(() => {
+            this.setTimeout(() => {
+                this.setState({loading: false});
+                this.toggle();
+            }, 1000);
+        }).catch(err => {
+            console.log(err)
+            this.setTimeout(() => {
+                this.setState({loading: false});
+            }, 1000);
+        });
+    }
+
+    render() {
+        return (
+            <span>
+            <Button color='secondary' onClick={this.toggle}>Authorize</Button>
+            <Modal isOpen={this.state.modal} toggle={this.toggle} className={this.props.className}>
+            <ModalHeader toggle={this.toggle}>Allow this market to withdraw from your account.</ModalHeader>
+            <ModalBody>
+            <p>This action will allow this market to withdraw {this.props.car.amount} {this.state.symbol} ( Total balance: {this.state.balance} {this.state.symbol}) from your account. You have to allow the market to withdraw money from your account in order to accept offers on cars.</p>
+            </ModalBody>
+            <ModalFooter>
+            <Button
+            color='primary'
+            onClick={this.allow}
+            disabled={this.state.loading}
+            >
+            {'Continue'}
+            {this.state.loading && <i className="fa fa-spinner fa-spin"></i>}
+            </Button>{' '}
+            <Button color='secondary' onClick={this.toggle}>Cancel</Button>
+            </ModalFooter>
+            </Modal>
+            </span>
+        );
+    }
+}
+ReactMixin.onClass(AuthorizeModal, TimerMixin);
 
