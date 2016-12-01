@@ -26,7 +26,12 @@ contract StandardMarketplace is Marketplace {
     isAuthorizedToSell(_item)
     returns (bool success) {
         if(_price < 0) return false;
-        addOffer(_item, Offer({ seller: msg.sender, buyer: _buyer, amount:_price, state: OfferStates.Extended}));
+        addOffer(_item, Offer({ 
+            seller: msg.sender,
+            buyer: _buyer,
+            amount:_price,
+            state: OfferStates.Extended
+        }));
         SellerAddedOffer(_item);
         return true;
     }
@@ -135,7 +140,7 @@ contract StandardMarketplace is Marketplace {
     function onOfferAdded(Tradeable _item, Offer _offer) internal {}
     function onOfferRemoved(Tradeable _item, Offer _offer) internal {}
 
-    enum OfferStates { Extended, Accepted }
+    enum OfferStates { Initial, Extended, Accepted }
     struct Offer {
         address seller;
         address buyer;

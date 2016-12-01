@@ -118,7 +118,7 @@ contract("StandardMarketplace", accounts => {
 
                 async(market.offers.call(
                     tradeable.address   // item address
-                )).then(o => o[3].toNumber()).should.eventually.equal(0)
+                )).then(o => o[3].toNumber()).should.eventually.equal(1)
 
             ])
         })
@@ -223,7 +223,11 @@ contract("StandardMarketplace", accounts => {
                 /* Asserting that the offer was removed from the mapping */
                 async(market.offers.call(
                     tradeable.address   // item address
-                )).then(o => o[0]).should.eventually.equal(none)
+                )).then(o => o[0]).should.eventually.equal(none),
+
+                async(market.offers.call(
+                    tradeable.address   // item address
+                )).then(o => o[3].toNumber()).should.eventually.equal(0)
 
             ])
         })
@@ -327,7 +331,7 @@ contract("StandardMarketplace", accounts => {
                 /* Asserting that the offer was accepted */
                 async(market.offers.call(
                     tradeable.address   // item address
-                )).then(o => o[3].toNumber()).should.eventually.equal(1),
+                )).then(o => o[3].toNumber()).should.eventually.equal(2),
 
                 /* Asserting that the money was withdrawn from the buyer */
                 asyncInt(token.balanceOf(
@@ -613,7 +617,11 @@ contract("StandardMarketplace", accounts => {
 
                 async(market.offers.call(
                     tradeable.address   // item address
-                )).then(o => o[0]).should.eventually.equal(none)
+                )).then(o => o[0]).should.eventually.equal(none),
+
+                async(market.offers.call(
+                    tradeable.address   // item address
+                )).then(o => o[3].toNumber()).should.eventually.equal(0)
 
             ])
         })
@@ -850,7 +858,11 @@ contract("StandardMarketplace", accounts => {
 
                 async(market.offers.call(
                     tradeable.address   // item address
-                )).then(o => o[0]).should.eventually.equal(none)
+                )).then(o => o[0]).should.eventually.equal(none),
+
+                async(market.offers.call(
+                    tradeable.address   // item address
+                )).then(o => o[3].toNumber()).should.eventually.equal(0)
 
             ])
         })
@@ -1013,7 +1025,11 @@ contract("StandardMarketplace", accounts => {
 
                 async(market.offers.call(
                     tradeable.address   // item address
-                )).then(o => o[0]).should.eventually.equal(owner)
+                )).then(o => o[0]).should.eventually.equal(owner),
+
+                 async(market.offers.call(
+                    tradeable.address   // item address
+                )).then(o => o[3].toNumber()).should.eventually.equal(1)
 
             ])
         })
