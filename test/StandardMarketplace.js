@@ -81,7 +81,7 @@ contract("StandardMarketplace", accounts => {
                     {from: owner}       // executor
                 )).should.be.fulfilled,
 
-                /* Extending offer */
+                /* Asserting that the result is true */
                 async(market.extendOffer.call(
                     tradeable.address,  // item address
                     buyer,              // buyers address
@@ -89,6 +89,7 @@ contract("StandardMarketplace", accounts => {
                     {from: owner}       // executor
                 )).should.eventually.equal(true),
 
+                /* Executing the extendOffer transaction */
                 async(market.extendOffer(
                     tradeable.address,  // item address
                     buyer,              // buyers address
@@ -102,7 +103,7 @@ contract("StandardMarketplace", accounts => {
                 )).then(e => e.args["item"])
                 .should.eventually.equal(tradeable.address),
 
-                /* Asserting that the offer is correctly added */
+                /* Asserting that the offer was correctly added */
                 async(market.offers.call(
                     tradeable.address   // item address
                 )).then(o => o[0]).should.eventually.equal(owner),
@@ -113,11 +114,11 @@ contract("StandardMarketplace", accounts => {
 
                 async(market.offers.call(
                     tradeable.address   // item address
-                )).then(o => o[2].c[0]).should.eventually.equal(1000),
+                )).then(o => o[2].toNumber()).should.eventually.equal(1000),
 
                 async(market.offers.call(
                     tradeable.address   // item address
-                )).then(o => o[3].c[0]).should.eventually.equal(0)
+                )).then(o => o[3].toNumber()).should.eventually.equal(0)
 
             ])
         })
@@ -244,10 +245,41 @@ contract("StandardMarketplace", accounts => {
                 )).should.be.fulfilled,
 
                 /* revoking the offer */
-                async(market.revokeOffer.call(
+                async(market.revokeOffer(
                     tradeable.address,  // item address
                     {from: buyer}       // executor
-                )).should.be.rejected
+                )).should.be.rejected,
+
+            ])
+        })
+
+        it("should not be possible to revoke offer twice", () => {
+            return Promise.all([
+
+                /* setting up the offer */
+                async(tradeable.authorizeSeller(
+                    market.address,     // market address
+                    {from: owner}       // executor
+                )).should.be.fulfilled,
+
+                async(market.extendOffer(
+                    tradeable.address,  // item address
+                    buyer,              // buyers address
+                    1000,               // purchase amount
+                    {from: owner}       // executor
+                )).should.be.fulfilled,
+
+                /* revoking the offer */
+                async(market.revokeOffer(
+                    tradeable.address,  // item address
+                    {from: owner}       // executor
+                )).should.be.fulfilled,
+
+                /* revoking the offer again */
+                async(market.revokeOffer.call(
+                    tradeable.address,  // item address
+                    {from: owner}       // executor
+                )).should.eventually.equal(false)
 
             ])
         })
@@ -295,7 +327,7 @@ contract("StandardMarketplace", accounts => {
                 /* Asserting that the offer was accepted */
                 async(market.offers.call(
                     tradeable.address   // item address
-                )).then(o => o[3].c[0]).should.eventually.equal(1),
+                )).then(o => o[3].toNumber()).should.eventually.equal(1),
 
                 /* Asserting that the money was withdrawn from the buyer */
                 asyncInt(token.balanceOf(
@@ -349,11 +381,6 @@ contract("StandardMarketplace", accounts => {
                     {from: buyer}       // executor
                 )).should.eventually.equal(false),
 
-                async(market.acceptOffer(
-                    tradeable.address,  // item address
-                    {from: buyer}       // executor
-                )).should.be.rejected
-
             ])
         })
 
@@ -385,7 +412,7 @@ contract("StandardMarketplace", accounts => {
             ])
         })
 
-        it("should not be possible to accept offer if insufficent allowance ", () => {
+        it("should not be possible to accept offer if insufficient allowance ", () => {
             return Promise.all([
 
                 /* Allowing the market to withdraw funds from the buyer */
@@ -442,7 +469,7 @@ contract("StandardMarketplace", accounts => {
             ])
         })
 
-        it("should not be possible to accept offer if insufficent funds", () => {
+        it("should not be possible to accept offer if insufficient funds", () => {
             return Promise.all([
 
                 /* Allowing the market to withdraw funds from the buyer */
@@ -514,7 +541,7 @@ contract("StandardMarketplace", accounts => {
                     {from: owner}       // executor
                 )).should.be.fulfilled,
 
-                /* Asserting that the money was paided back to the buyer */
+                /* Asserting that the money was paid back to the buyer */
                 asyncInt(token.balanceOf(buyer))
                 .should.eventually.equal(1000),
 
@@ -629,6 +656,48 @@ contract("StandardMarketplace", accounts => {
             ])
         })
 
+        it("should not be possible to completeTransaction twice", () => {
+            return Promise.all([
+
+                /* Allowing the market to withdraw funds from the buyer */
+                async(token.approve(
+                    market.address,     // market address
+                    1000,               // purchase amount
+                    {from: buyer}       // executor
+                )),
+
+                /* Setting up the offer */
+                async(tradeable.authorizeSeller(
+                    market.address,     // market address
+                    {from: owner}       // executor
+                )).should.be.fulfilled,
+
+                async(market.extendOffer(
+                    tradeable.address,  // item address
+                    buyer,              // buyers address
+                    1000,               // purchase amount
+                    {from: owner}       // executor
+                )).should.be.fulfilled,
+
+                /* Accepting the offer */
+                async(market.acceptOffer(
+                    tradeable.address,  // item address
+                    {from: buyer}       // executor
+                )).should.be.fulfilled,
+
+                /* Completing the transaction */
+                async(market.completeTransaction(
+                    tradeable.address,  // item address
+                    {from: buyer}       // buyers address
+                )).should.be.fulfilled,
+
+                /* Completing the transaction again */
+                async(market.completeTransaction.call(
+                    tradeable.address,  // item address
+                    {from: buyer}       // buyers address
+                )).should.be.rejected
+            ])
+        })
         it("should not be possible to completeTransaction if offer not accepted", () => {
             return Promise.all([
 
@@ -821,6 +890,49 @@ contract("StandardMarketplace", accounts => {
                     {from: owner}       // buyers address
                 )).should.be.rejected
 
+            ])
+        })
+
+        it("should not be possible to abortTransaction twice", () => {
+            return Promise.all([
+
+                /* Allowing the market to withdraw funds from the buyer */
+                async(token.approve(
+                    market.address,     // market address
+                    1000,               // purchase amount
+                    {from: buyer}       // executor
+                )),
+
+                /* Setting up the offer */
+                async(tradeable.authorizeSeller(
+                    market.address,     // market address
+                    {from: owner}       // executor
+                )).should.be.fulfilled,
+
+                async(market.extendOffer(
+                    tradeable.address,  // item address
+                    buyer,              // buyers address
+                    1000,               // purchase amount
+                    {from: owner}       // executor
+                )).should.be.fulfilled,
+
+                /* Accepting the offer */
+                async(market.acceptOffer(
+                    tradeable.address,  // item address
+                    {from: buyer}       // executor
+                )).should.be.fulfilled,
+
+                /* Completing the transaction */
+                async(market.abortTransaction(
+                    tradeable.address,  // item address
+                    {from: buyer}       // buyers address
+                )).should.be.fulfilled,
+
+                /* Completing the transaction again */
+                async(market.abortTransaction.call(
+                    tradeable.address,  // item address
+                    {from: buyer}       // buyers address
+                )).should.be.rejected
             ])
         })
 

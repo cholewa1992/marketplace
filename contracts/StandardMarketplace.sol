@@ -56,6 +56,9 @@ contract StandardMarketplace is Marketplace {
     function revokeOffer(Tradeable _item) isOwnerOf(_item) returns (bool success) {
         var offer = offers[_item];
 
+        /* If the offer is not added then the seller will be 0x0 */
+        if(address(offer.seller) != msg.sender) return false;
+
         var amount = balance[_item][offer.buyer];
         if(offer.state == OfferStates.Accepted && amount > 0) {
             /* transferring all locked funds back to the buyer */
