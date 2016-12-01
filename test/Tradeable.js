@@ -19,9 +19,9 @@ var async = function (r) {
 
 contract("Tradeable", accounts => {
 
-    let owner = accounts[0]; 
+    let owner = accounts[0];
     let buyer = accounts[1];
-    let market = accounts[2];
+    let seller = accounts[2];
 
     describe("Initiate", () => {
         it("should be possible to create new instance", () => {
@@ -43,23 +43,23 @@ contract("Tradeable", accounts => {
             return async(tradeable.owner.call()).should.eventually.equal(owner)
         })
 
-        it("should be possible to authorizeMarket if owner", () => {
-            return async(tradeable.authorizeMarket.call(market, {from: owner})).should.be.fulfilled;
+        it("should be possible to authorizeSeller if owner", () => {
+            return async(tradeable.authorizeSeller.call(seller, {from: owner})).should.be.fulfilled;
         })
 
-        it("should not be possible to authorizeMarket if not owner", () => {
-            return async(tradeable.authorizeMarket.call(market, {from: buyer})).should.be.rejected;
+        it("should not be possible to authorizeSeller if not owner", () => {
+            return async(tradeable.authorizeSeller.call(seller, {from: buyer})).should.be.rejected;
         })
 
         it("should return correct values of isAuthorizedToSell", () => {
             return Promise.all([
-                async(tradeable.authorizeMarket(market, {from: owner})),
-                async(tradeable.isAuthorizedToSell.call(market)).should.eventually.equal(true),
+                async(tradeable.authorizeSeller(seller, {from: owner})),
+                async(tradeable.isAuthorizedToSell.call(seller)).should.eventually.equal(true),
                 async(tradeable.isAuthorizedToSell.call(accounts[3])).should.eventually.equal(false)
             ])
         })
 
-        it("should allow transferOwnership if market", () => {
+        it("should allow transferOwnership if seller", () => {
             return Promise.all([
                 async(tradeable.transferOwnership(buyer, {from: owner})).should.be.fulfilled,
                 async(tradeable.owner.call()).should.eventually.equal(buyer)
@@ -67,17 +67,23 @@ contract("Tradeable", accounts => {
             ])
         })
 
-        it("should allow transferOwnership if authorized market", () => {
+        it("should allow transferOwnership if authorized seller", () => {
             return Promise.all([
-                async(tradeable.authorizeMarket(market, {from: owner})),
-                async(tradeable.transferOwnership(buyer, {from: market})).should.be.fulfilled,
+                async(tradeable.authorizeSeller(seller, {from: owner})),
+                async(tradeable.transferOwnership(buyer, {from: seller})).should.be.fulfilled,
                 async(tradeable.owner.call()).should.eventually.equal(buyer)
             ])
         })
 
-        it("should not allow transferOwnership if not market or owner", () => {
+        it("should not allow transferOwnership if seller not authorized", () => {
             return Promise.all([
-                async(tradeable.authorizeMarket(market, {from: owner})),
+                async(tradeable.transferOwnership(buyer, {from: seller})).should.be.rejected,
+                async(tradeable.owner.call()).should.eventually.equal(owner)
+            ])
+        })
+
+        it("should not allow transferOwnership if not seller or market", () => {
+            return Promise.all([
                 async(tradeable.transferOwnership(buyer, {from: buyer})).should.be.rejected,
                 async(tradeable.owner.call()).should.eventually.equal(owner)
             ])

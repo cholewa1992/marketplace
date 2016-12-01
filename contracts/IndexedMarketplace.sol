@@ -9,7 +9,7 @@ contract IndexedMarketplace is StandardMarketplace {
 
     }
 
-    function addOffer(Tradeable _item, Offer _offer) internal {
+    function onOfferAdded(Tradeable _item, Offer _offer) internal {
 
         int256 index = -1;  // Index of the item
         int256 free = -1;   // Index of first free slot in indexes
@@ -34,21 +34,15 @@ contract IndexedMarketplace is StandardMarketplace {
                 indexes[uint256(free)] = _item;
             }
         }
-
-        super.addOffer(_item,_offer);
-
     }
 
-    function removeOffer(Tradeable _item, Offer _offer) internal {
+    function onOfferRemoved(Tradeable _item, Offer _offer) internal {
 
         for(uint i = 0; i < indexes.length; i++){
             if(indexes[i] == address(_item)) {
                 delete indexes[i];
             }
         }
-
-        super.removeOffer(_item,_offer);
-
     }
 
     function getNumberOfItemsOffered() constant returns(uint){

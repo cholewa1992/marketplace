@@ -1,5 +1,5 @@
 [Bb]uild/
-
+*.swp
 
 # Created by https://www.gitignore.io/api/osx,windows,archives
 

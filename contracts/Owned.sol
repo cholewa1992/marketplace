@@ -14,5 +14,4 @@ contract Owned {
     function transferOwnership(address _newOwner) isOwner {
         owner = _newOwner;
     }
-
 }

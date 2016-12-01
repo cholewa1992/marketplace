@@ -10,6 +10,10 @@ contract Vehicle is Tradeable {
         issuer = msg.sender;
         vin = _vin;
     }
+
+    function onTransferOwnership(address _newOwner) internal {
+
+    }
 }
 
 

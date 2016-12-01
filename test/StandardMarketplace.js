@@ -76,7 +76,7 @@ contract("StandardMarketplace", accounts => {
             return Promise.all([
 
                 /* Allowing tradable to sold on market */
-                async(tradeable.authorizeMarket(
+                async(tradeable.authorizeSeller(
                     market.address,     // market address
                     {from: owner}       // executor
                 )).should.be.fulfilled,
@@ -134,7 +134,7 @@ contract("StandardMarketplace", accounts => {
         it("should not be possible to extend offer if not owner", () => {
             return Promise.all([
 
-                async(tradeable.authorizeMarket(
+                async(tradeable.authorizeSeller(
                     market.address,     // market address
                     {from: owner}       // executor address
                 )).should.be.fulfilled,
@@ -152,7 +152,7 @@ contract("StandardMarketplace", accounts => {
         it("should be possible to extend offer with amount equal zero", () => {
             return Promise.all([
 
-                async(tradeable.authorizeMarket(
+                async(tradeable.authorizeSeller(
                     market.address,     // market address
                     {from: owner}       // executor address
                 )).should.be.fulfilled,
@@ -167,10 +167,12 @@ contract("StandardMarketplace", accounts => {
             ])
         })
 
+        // When given -1 as parameter it will be cast to 0 as the amount parameter is uint
+        /*
         it("should not be possible to extend offer with amount lower than zero", () => {
             return Promise.all([
 
-                async(tradeable.authorizeMarket(
+                async(tradeable.authorizeSeller(
                     market.address,     // market address
                     {from: owner}       // executor address
                 )).should.be.fulfilled,
@@ -183,13 +185,13 @@ contract("StandardMarketplace", accounts => {
                 )).should.eventually.equal(false)
 
             ])
-        })
+        })*/
 
         it("should be possible to revoke offer", () => {
             return Promise.all([
 
                 /* Setting up the offer */
-                async(tradeable.authorizeMarket(
+                async(tradeable.authorizeSeller(
                     market.address,     // market address
                     {from: owner}       // executor
                 )).should.be.fulfilled,
@@ -229,7 +231,7 @@ contract("StandardMarketplace", accounts => {
             return Promise.all([
 
                 /* setting up the offer */
-                async(tradeable.authorizeMarket(
+                async(tradeable.authorizeSeller(
                     market.address,     // market address
                     {from: owner}       // executor
                 )).should.be.fulfilled,
@@ -261,7 +263,7 @@ contract("StandardMarketplace", accounts => {
                 )),
 
                 /* Setting up the offer */
-                async(tradeable.authorizeMarket(
+                async(tradeable.authorizeSeller(
                     market.address,     // market address
                     {from: owner}       // executor
                 )).should.be.fulfilled,
@@ -319,7 +321,7 @@ contract("StandardMarketplace", accounts => {
                 )),
 
                 /* Setting up the offer */
-                async(tradeable.authorizeMarket(
+                async(tradeable.authorizeSeller(
                     market.address,     // market address
                     {from: owner}       // executor
                 )).should.be.fulfilled,
@@ -345,7 +347,12 @@ contract("StandardMarketplace", accounts => {
                 async(market.acceptOffer.call(
                     tradeable.address,  // item address
                     {from: buyer}       // executor
-                )).should.eventually.equal(false)
+                )).should.eventually.equal(false),
+
+                async(market.acceptOffer(
+                    tradeable.address,  // item address
+                    {from: buyer}       // executor
+                )).should.be.rejected
 
             ])
         })
@@ -357,7 +364,7 @@ contract("StandardMarketplace", accounts => {
                 async(token.approve(market.address, 1000, {from: buyer})),
 
                 /* Setting up the offer */
-                async(tradeable.authorizeMarket(
+                async(tradeable.authorizeSeller(
                     market.address,     // market address
                     {from: owner}       // executor
                 )).should.be.fulfilled,
@@ -389,7 +396,7 @@ contract("StandardMarketplace", accounts => {
                 )),
 
                 /* Setting up the offer */
-                async(tradeable.authorizeMarket(
+                async(tradeable.authorizeSeller(
                     market.address,     // market address
                     {from: owner}       // executor
                 )).should.be.fulfilled,
@@ -421,7 +428,7 @@ contract("StandardMarketplace", accounts => {
                 )),
 
                 /* Setting up the offer */
-                async(tradeable.authorizeMarket(
+                async(tradeable.authorizeSeller(
                     market.address,     // market address
                     {from: owner}       // executor
                 )).should.be.fulfilled,
@@ -446,7 +453,7 @@ contract("StandardMarketplace", accounts => {
                 )),
 
                 /* Setting up the offer */
-                async(tradeable.authorizeMarket(
+                async(tradeable.authorizeSeller(
                     market.address,     // market address
                     {from: owner}       // executor
                 )).should.be.fulfilled,
@@ -478,7 +485,7 @@ contract("StandardMarketplace", accounts => {
                 )),
 
                 /* Setting up the offer */
-                async(tradeable.authorizeMarket(
+                async(tradeable.authorizeSeller(
                     market.address,     // market address
                     {from: owner}       // executor
                 )).should.be.fulfilled,
@@ -530,7 +537,7 @@ contract("StandardMarketplace", accounts => {
                 )),
 
                 /* Setting up the offer */
-                async(tradeable.authorizeMarket(
+                async(tradeable.authorizeSeller(
                     market.address,     // market address
                     {from: owner}       // executor
                 )).should.be.fulfilled,
@@ -595,7 +602,7 @@ contract("StandardMarketplace", accounts => {
                 )),
 
                 /* Setting up the offer */
-                async(tradeable.authorizeMarket(
+                async(tradeable.authorizeSeller(
                     market.address,     // market address
                     {from: owner}       // executor
                 )).should.be.fulfilled,
@@ -633,7 +640,7 @@ contract("StandardMarketplace", accounts => {
                 )),
 
                 /* Setting up the offer */
-                async(tradeable.authorizeMarket(
+                async(tradeable.authorizeSeller(
                     market.address,     // market address
                     {from: owner}       // executor
                 )).should.be.fulfilled,
@@ -686,7 +693,7 @@ contract("StandardMarketplace", accounts => {
                 )),
 
                 /* Setting up the offer */
-                async(tradeable.authorizeMarket(
+                async(tradeable.authorizeSeller(
                     market.address,     // market address
                     {from: owner}       // executor
                 )).should.be.fulfilled,
@@ -727,7 +734,7 @@ contract("StandardMarketplace", accounts => {
                 )),
 
                 /* Setting up the offer */
-                async(tradeable.authorizeMarket(
+                async(tradeable.authorizeSeller(
                     market.address,     // market address
                     {from: owner}       // executor
                 )).should.be.fulfilled,
@@ -790,7 +797,7 @@ contract("StandardMarketplace", accounts => {
                 )),
 
                 /* Setting up the offer */
-                async(tradeable.authorizeMarket(
+                async(tradeable.authorizeSeller(
                     market.address,     // market address
                     {from: owner}       // executor
                 )).should.be.fulfilled,
@@ -828,7 +835,7 @@ contract("StandardMarketplace", accounts => {
                 )),
 
                 /* Setting up the offer */
-                async(tradeable.authorizeMarket(
+                async(tradeable.authorizeSeller(
                     market.address,     // market address
                     {from: owner}       // executor
                 )).should.be.fulfilled,
@@ -853,7 +860,7 @@ contract("StandardMarketplace", accounts => {
                 )),
 
                 /* Setting up the offer */
-                async(tradeable.authorizeMarket(
+                async(tradeable.authorizeSeller(
                     market.address,     // market address
                     {from: owner}       // executor
                 )).should.be.fulfilled,
@@ -951,7 +958,7 @@ contract("IndexedMarketplace", accounts => {
                 .should.eventually.equal(0),
 
                 /* Allowing tradable to sold on market */
-                async(tradeable.authorizeMarket(
+                async(tradeable.authorizeSeller(
                     market.address,     // market address
                     {from: owner}       // executor
                 )).should.be.fulfilled,
@@ -974,7 +981,7 @@ contract("IndexedMarketplace", accounts => {
 
 
                 /* Allowing tradable to sold on market */
-                async(tradeable.authorizeMarket(
+                async(tradeable.authorizeSeller(
                     market.address,     // market address
                     {from: owner}       // executor
                 )).should.be.fulfilled,

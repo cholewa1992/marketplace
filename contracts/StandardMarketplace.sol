@@ -43,7 +43,7 @@ contract StandardMarketplace is Marketplace {
 
             /* Transfer funds from the buyer to the market */
             if(!token.transferFrom(offer.buyer, this, offer.amount)) throw;
-            balance[_item][offer.buyer] += offer.amount;
+            balance[_item][offer.buyer] = offer.amount;
         }
 
         /* Accept the offer */
@@ -119,16 +119,18 @@ contract StandardMarketplace is Marketplace {
         return true;
     }
 
-    function addOffer(Tradeable _item, Offer _offer) internal {
-
+    function addOffer(Tradeable _item, Offer _offer) private {
         offers[_item] = _offer;
+        onOfferAdded(_item,_offer);
     }
 
-    function removeOffer(Tradeable _item, Offer _offer) internal {
-
+    function removeOffer(Tradeable _item, Offer _offer) private {
         delete offers[_item];
-
+        onOfferRemoved(_item,_offer);
     }
+
+    function onOfferAdded(Tradeable _item, Offer _offer) internal {}
+    function onOfferRemoved(Tradeable _item, Offer _offer) internal {}
 
     enum OfferStates { Extended, Accepted }
     struct Offer {

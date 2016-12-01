@@ -9,11 +9,10 @@ contract Tradeable is Owned {
     event SellerWasAuthorized(address addr);
 
     /* Modifiers */
-    modifier isMarket() { if(msg.sender == seller) _; else throw; }
-    modifier isMarketOrOwner() { if(msg.sender == seller || msg.sender == owner) _; else throw; }
+    modifier isSellerOrOwner() { if(msg.sender == seller || msg.sender == owner) _; else throw; }
 
     /* Methods */
-    function authorizeMarket(address _seller) public isOwner {
+    function authorizeSeller(address _seller) public isOwner {
         seller = _seller;
     }
 
@@ -21,9 +20,12 @@ contract Tradeable is Owned {
         return seller == _seller;
     }
 
-    function transferOwnership(address _newOwner) isMarketOrOwner {
+    function transferOwnership(address _newOwner) isSellerOrOwner {
         owner = _newOwner;
+        onTransferOwnership(_newOwner);
     }
+
+    function onTransferOwnership(address _newOwner) internal {}
 }
 
 
