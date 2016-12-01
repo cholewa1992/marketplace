@@ -100,6 +100,12 @@ export default class CarStore{
         });
     }
 
+    resolveState(i){
+        if(i === 1) return 'extended';
+        if(i === 2) return 'accepted';
+        return 'initial';
+    }
+
     fetchAllCars() {
         return this.dmr.getVehiclesOwnedBy(this.acc).then(cars => {
             let arr = [];
@@ -138,9 +144,7 @@ export default class CarStore{
                 owner: car[2],
                 buyer: car[3][1],
                 amount: car[3][2].toNumber(),
-                state: car[3][1] == this.nullAddress
-                ? 'initial'
-                : car[3][3].toNumber() === 1 ?  'accepted' : 'extended'
+                state: this.resolveState(car[3][3].toNumber())
             })
             this.cars[r.vin] = r;
         });

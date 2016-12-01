@@ -26,7 +26,7 @@ contract StandardMarketplace is Marketplace {
     isAuthorizedToSell(_item)
     returns (bool success) {
         if(_price < 0) return false;
-        addOffer(_item, Offer({ 
+        addOffer(_item, Offer({
             seller: msg.sender,
             buyer: _buyer,
             amount:_price,
