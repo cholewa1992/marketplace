@@ -25,6 +25,7 @@ contract StandardMarketplace is Marketplace {
     isOwnerOf(_item)
     isAuthorizedToSell(_item)
     returns (bool success) {
+        if(offers[_item].state != OfferStates.Initial) return false;
         if(_price < 0) return false;
         addOffer(_item, Offer({
             seller: msg.sender,
@@ -61,8 +62,8 @@ contract StandardMarketplace is Marketplace {
     function revokeOffer(Tradeable _item) isOwnerOf(_item) returns (bool success) {
         var offer = offers[_item];
 
-        /* If the offer is not added then the seller will be 0x0 */
-        if(address(offer.seller) != msg.sender) return false;
+        /* If the offer is not added then the state is initial */
+        if(offers[_item].state == OfferStates.Initial) return false;
 
         var amount = balance[_item][offer.buyer];
         if(offer.state == OfferStates.Accepted && amount > 0) {

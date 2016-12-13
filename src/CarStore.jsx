@@ -25,7 +25,6 @@ export default class CarStore{
         Token.setProvider(web3.currentProvider);
 
         this.web3 = web3;
-        this.market = Market.deployed();
         this.dmr = DMR.deployed();
         this.token = Token.deployed();
         this.acc = web3.eth.defaultAccount;
@@ -81,19 +80,19 @@ export default class CarStore{
             this.fetchAllCars(),
             this.fetchOfferedCars()
         ]).then(() => {
-            this.market.BuyerAcceptedOffer({fromBlock: "latest"}).watch((err,e) => {
+            this.dmr.BuyerAcceptedOffer({fromBlock: "latest"}).watch((err,e) => {
                 this.fetchCar(e.args["item"]).then(() => this.notifyChange());
             });
 
-            this.market.SellerAddedOffer({fromBlock: "latest"}).watch((err,e) => {
+            this.dmr.SellerAddedOffer({fromBlock: "latest"}).watch((err,e) => {
                 this.fetchCar(e.args["item"]).then(() => this.notifyChange());
             });
 
-            this.market.SellerRevokedOffer({fromBlock: "latest"}).watch((err,e) => {
+            this.dmr.SellerRevokedOffer({fromBlock: "latest"}).watch((err,e) => {
                 this.fetchCar(e.args["item"]).then(() => this.notifyChange());
             });
 
-            this.market.BuyerCompletedTransaction({fromBlock: "latest"}).watch((err,e) => {
+            this.dmr.BuyerCompletedTransaction({fromBlock: "latest"}).watch((err,e) => {
                 this.fetchCar(e.args["item"]).then(() => this.notifyChange());
             });
 
@@ -129,7 +128,7 @@ export default class CarStore{
             address,
             Vehicle.at(address).vin.call(),
             Vehicle.at(address).owner.call(),
-            this.market.offers.call(address),
+            this.dmr.offers.call(address),
             this.isMarketAuthorized(address)
         ]).then(car => {
             let r = ({
@@ -151,7 +150,7 @@ export default class CarStore{
     }
 
     fetchOfferedCars() {
-        return this.market.getItemsOfferedTo(this.acc).then(cars => {
+        return this.dmr.getItemsOfferedTo(this.acc).then(cars => {
             let arr = [];
 
             cars.forEach(car => {
@@ -166,7 +165,7 @@ export default class CarStore{
 
     extendOffer(car, buyer, amount) {
         console.log(amount);
-        return this.market.extendOffer(
+        return this.dmr.extendOffer(
             car,
             buyer,
             amount,
@@ -175,15 +174,15 @@ export default class CarStore{
     }
 
     isMarketAuthorized(car) {
-        return Vehicle.at(car).isAuthorizedToSell(this.market.address);
+        return Vehicle.at(car).isAuthorizedToSell(this.dmr.address);
     }
 
     authorizeMarket(car) {
-        return Vehicle.at(car).authorizeMarket(this.market.address, { from: this.acc, gas: this.gas });
+        return Vehicle.at(car).authorizeSeller(this.dmr.address, { from: this.acc, gas: this.gas });
     }
 
     allowedToSpend() {
-        return this.token.allowance(this.acc, this.market.address).then(r => r.toNumber());
+        return this.token.allowance(this.acc, this.dmr.address).then(r => r.toNumber());
     }
 
     balance() {
@@ -191,7 +190,7 @@ export default class CarStore{
     }
 
     allowSpending(amount) {
-        return this.token.approve(this.market.address, amount , { from: this.acc, gas: this.gas });
+        return this.token.approve(this.dmr.address, amount , { from: this.acc, gas: this.gas });
     }
 
     tokenSymbol() {
@@ -199,21 +198,21 @@ export default class CarStore{
     }
 
     revokeOffer(car) {
-        return this.market.revokeOffer(car, { from: this.acc, gas: this.gas });
+        return this.dmr.revokeOffer(car, { from: this.acc, gas: this.gas });
     }
 
     acceptOffer(car) {
-        return this.market.acceptOffer(car, { from: this.acc, gas: this.gas });
+        return this.dmr.acceptOffer(car, { from: this.acc, gas: this.gas });
     }
 
     completeTransaction(car) {
-        return this.market.completeTransaction(car, { from: this.acc, gas: this.gas });
+        return this.dmr.completeTransaction(car, { from: this.acc, gas: this.gas });
     }
 
     abortTransaction(car) {
         console.log(car);
         console.log(this.acc);
-        return this.market.abortTransaction(car, { from: this.acc, gas: this.gas });
+        return this.dmr.abortTransaction(car, { from: this.acc, gas: this.gas });
     }
 
 

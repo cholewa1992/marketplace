@@ -19,13 +19,27 @@ var async = function (r) {
 
 contract("DMR", accounts => {
 
-    let owner = accounts[0]; 
+    let token;
+    let initialAmount = 1000;
+
+    let owner = accounts[0];
     let buyer = accounts[1];
     let market = accounts[2];
 
+    beforeEach(() => {
+        return async(HumanStandardToken.new(
+            initialAmount,  // Initial amount of coins
+            "Test token",   // Name of the token
+            0,              // Number of decimal points
+            "tt",           // Token symbol
+            {from: buyer}   // Executing account
+        )).then(i => token = i)
+    })
+
     describe("Initiate", () => {
         it("should be possible to create new instance", () => {
-            return async(DMR.new({from: owner}))
+
+            return async(DMR.new(token.address, {from: owner}))
                 .should.be.fulfilled;
         })
     })
@@ -35,7 +49,7 @@ contract("DMR", accounts => {
         let dmr;
 
         beforeEach(() => {
-            return async(DMR.new({from: owner})).then(i => dmr = i);
+            return async(DMR.new(token.address, {from: owner})).then(i => dmr = i);
         })
 
         it("should be able to issue new car", () => {

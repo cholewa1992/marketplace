@@ -1,7 +1,8 @@
 pragma solidity ^0.4.0;
 import "Vehicle.sol";
+import "IndexedMarketplace.sol";
 
-contract DMR  {
+contract DMR is IndexedMarketplace {
 
     event VehicleIssued(address addr);
 
@@ -9,6 +10,8 @@ contract DMR  {
     uint private lastPlate = 0;
     mapping(string => address) private index;
     mapping(uint => address) private licensePlates;
+
+    function DMR(Token _token) IndexedMarketplace(_token) { }
 
     function issueVehicle(string _vin) returns(address) {
 
