@@ -60,6 +60,8 @@ export default class Cars extends Component {
 
     render() {
 
+        console.log(this.state.cars);
+
         let cars = this.state.cars.filter(car => car.owner == this.store.acc).map(car => (
             <ListGroupItem
             key={car.vin}
@@ -87,7 +89,7 @@ export default class Cars extends Component {
         return (
             <div>
             { offers.length == 0 && cars.length == 0 && <center><h4>You have no cars, and no cars offered to you</h4></center> }
-            { offers.length > 0 || cars.length > 0 && ( 
+            { (offers.length > 0 || cars.length > 0) && ( 
             <Row>
                 <Col md='4'>
                 { offers.length > 0 && (
