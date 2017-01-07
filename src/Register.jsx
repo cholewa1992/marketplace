@@ -9,10 +9,6 @@ import { Media } from 'reactstrap';
 import { Link } from 'react-router';
 import CarStore from './CarStore'
 
-import 'bootstrap/dist/css/bootstrap.css';
-import 'font-awesome/css/font-awesome.min.css'
-import './App.css';
-
 export class Register extends Component {
     constructor(props) {
         super(props);

@@ -9,10 +9,6 @@ import { Media } from 'reactstrap';
 import { Link } from 'react-router';
 import { Token, Market, DMR, Vehicle, web3 } from './Contracts';
 
-import 'bootstrap/dist/css/bootstrap.css';
-import 'font-awesome/css/font-awesome.min.css'
-import './App.css';
-
 export class Search extends Component {
 
     constructor(props) {
