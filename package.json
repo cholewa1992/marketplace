@@ -26,7 +26,10 @@
     "react-timer-mixin": "^0.13.3",
     "reactstrap": "^4.0.0-alpha.8",
     "truffle": "*",
-    "w3.js": "^1.0.5"
+    "truffle-solidity-loader": "0.0.8",
+    "w3.js": "^1.0.5",
+    "webpack": "^1.14.0",
+    "webpack-dev-server": "^1.16.2"
   },
   "scripts": {
     "start": "react-scripts start",
