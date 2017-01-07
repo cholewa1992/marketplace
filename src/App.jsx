@@ -9,7 +9,7 @@ import { Media } from 'reactstrap';
 import { Link } from 'react-router';
 import { Token, Market, DMR, Vehicle, web3 } from './Contracts';
 
-import 'bootstrap-v4-dev/dist/css/bootstrap.css';
+import 'bootstrap/dist/css/bootstrap.css';
 import 'font-awesome/css/font-awesome.min.css'
 import './App.css';
 
