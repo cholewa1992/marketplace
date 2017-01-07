@@ -14,10 +14,17 @@
     "ethereumjs-testrpc": "*"
   },
   "dependencies": {
+    "bootstrap-v4-dev": "^4.0.0-alpha.5",
     "ether-pudding": "^3.2.0",
-    "react": "^15.4.1",
-    "react-dom": "^15.4.1",
+    "font-awesome": "^4.7.0",
+    "react": "^15.4.2",
+    "react-addons-css-transition-group": "^15.4.2",
+    "react-addons-transition-group": "^15.4.2",
+    "react-dom": "^15.4.2",
+    "react-mixin": "^3.0.5",
     "react-router": "^3.0.0",
+    "react-timer-mixin": "^0.13.3",
+    "reactstrap": "^4.0.0-alpha.8",
     "truffle": "*",
     "w3.js": "^1.0.5"
   },
