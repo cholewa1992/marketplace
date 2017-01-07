@@ -68,7 +68,7 @@ export default class Cars extends Component {
             action
             className='text-truncate'
             >
-            {car.brand} {car.model} ({car.plate})
+            {car.brand} {car.model} ({car.year})
             </ListGroupItem>
         ));
 
@@ -80,32 +80,39 @@ export default class Cars extends Component {
             action
             className='text-truncate'
             >
-            {car.brand} {car.model} ({car.plate})
+            {car.brand} {car.model} ({car.year})
             </ListGroupItem>
         ));
 
         return (
+            <div>
+            { offers.length == 0 && cars.length == 0 && <center><h4>You have no cars, and no cars offered to you</h4></center> }
+            { offers.length > 0 || cars.length > 0 && ( 
             <Row>
-            <Col md='4'>
-            { offers.length > 0 && (
-                <Card>
-                <CardHeader>Cars offered to you</CardHeader>
-                <ListGroup className='list-group-flush'>
-                {offers}
-                </ListGroup>
-                </Card>
-            )}
-            <Card>
-            <CardHeader>Your cars</CardHeader>
-            <ListGroup className='list-group-flush'>
-            {cars}
-            </ListGroup>
-            </Card>
-            </Col>
-            <Col md='8'>
-            {this.state.selected && (<Car id={this.state.selected.vin}/>)}
-            </Col>
+                <Col md='4'>
+                { offers.length > 0 && (
+                    <Card>
+                    <CardHeader>Cars offered to you</CardHeader>
+                    <ListGroup className='list-group-flush'>
+                    {offers}
+                    </ListGroup>
+                    </Card>
+                )}
+                { cars.length > 0 && (
+                    <Card>
+                    <CardHeader>Your cars</CardHeader>
+                    <ListGroup className='list-group-flush'>
+                    {cars}
+                    </ListGroup>
+                    </Card>
+                )}
+                </Col>
+                <Col md='8'>
+                {this.state.selected && (<Car id={this.state.selected.vin}/>)}
+                </Col>
             </Row>
+            )}
+            </div>
         );
     }
 }
@@ -119,6 +126,7 @@ class Car extends Component {
         this.state = this.getStateFromStore();
         this.state.tooltipOpen = false;
         this.state.allowedToSpend = 0;
+        this.canBuy = false;
         this.state.authorized = false;
 
 
@@ -128,7 +136,14 @@ class Car extends Component {
 
     getStateFromStore(props) {
         const  id  = props ? props.id: this.props.id;
-        return { car: this.store.getCar(id) };
+        let car = this.store.getCar(id);
+        let ats = this.store.allowedToSpend;
+        return { 
+            car: car,
+            allowedToSpend: ats,
+            canBuy: ats >= car.amount
+
+        };
     }
 
     componentWillReceiveProps(nextProps) {
@@ -136,8 +151,7 @@ class Car extends Component {
     }
 
     componentDidMount() {
-        this.store.addChangeListener(this.updateCar)
-        this.store.allowedToSpend().then(r => this.setState({ allowedToSpend: r }));
+        this.store.addChangeListener(this.updateCar);
     }
 
     componentWillUnmount() {
@@ -179,9 +193,6 @@ class Car extends Component {
             <dt className='col-sm-4 text-truncate'>Color</dt>
             <dd className='col-sm-8'>{this.state.car.color}</dd>
 
-            <dt className='col-sm-4 text-truncate'>License plate</dt>
-            <dd className='col-sm-8'>{this.state.car.plate}</dd>
-
             <dt className='col-sm-4 text-truncate'>
             <span id='VinTooltip'>Vehicle Id</span>
             <Tooltip placement='left' isOpen={this.state.tooltipOpen} target='VinTooltip' toggle={this.toggle}>
@@ -196,8 +207,11 @@ class Car extends Component {
             {(this.state.car.owner == this.store.acc && !this.state.car.authorized) &&
                 <AuthorizeModal car={this.state.car}/>}{' '}
 
-            {(this.state.car.buyer == this.store.acc && this.state.car.state === 'extended') &&
+            {(this.state.car.buyer == this.store.acc && this.state.canBuy && this.state.car.state === 'extended') &&
                 <AcceptModal car={this.state.car}/>}{' '}
+
+            {(this.state.car.buyer == this.store.acc && !this.state.canBuy && this.state.car.state === 'extended') &&
+                <AllowModal car={this.state.car}/>}{' '}
 
             {(this.state.car.authorized && this.state.car.owner == this.store.acc && this.state.car.state === 'initial') &&
                 <SellModal car={this.state.car}/>}{' '}
@@ -478,7 +492,7 @@ class AcceptModal extends React.Component {
             <span>
             <Button color='success' onClick={this.toggle}>Accept</Button>
             <Modal isOpen={this.state.modal} toggle={this.toggle} className={this.props.className}>
-            <ModalHeader toggle={this.toggle}>Accept the exteded offer on {this.props.car.plate}.</ModalHeader>
+            <ModalHeader toggle={this.toggle}>Accept the exteded offer on {this.props.car.brand} {this.props.car.model} ({this.props.car.year}).</ModalHeader>
             <ModalBody>
             <p>This action will accept the offer extended on this car.</p>
             If the offer is accepted then <b>{this.props.car.amount} DKK</b> will be transfered from your account.
@@ -543,7 +557,7 @@ class CompleteModal extends React.Component {
             <span>
             <Button color='success' onClick={this.toggle}>Complete</Button>
             <Modal isOpen={this.state.modal} toggle={this.toggle} className={this.props.className}>
-            <ModalHeader toggle={this.toggle}>Complete the transaction for {this.props.car.plate}.</ModalHeader>
+            <ModalHeader toggle={this.toggle}>Complete the transaction for {this.props.car.brand} {this.props.car.model} ({this.props.car.year}).</ModalHeader>
             <ModalBody>
             <p>This action will complete the transaction on the car.</p>
             <p>Upon completion <b>{this.props.car.amount} DKK</b> will be transfered to the seller and the ownership of the car will be transfered to you.</p>
@@ -610,7 +624,7 @@ class AbortModal extends React.Component {
             <span>
             <Button color='danger' onClick={this.toggle}>Abort</Button>
             <Modal isOpen={this.state.modal} toggle={this.toggle} className={this.props.className}>
-            <ModalHeader toggle={this.toggle}>Abort transaction on {this.props.car.plate}</ModalHeader>
+            <ModalHeader toggle={this.toggle}>Abort transaction on {this.props.car.brand} {this.props.car.model} ({this.props.car.year})</ModalHeader>
             <ModalBody>
             <p>This action will abort the transaction on the car.</p>
             <p>The frozen assests (<b>{this.props.car.amount} DKK</b>) will be returned to you.</p>
@@ -735,6 +749,7 @@ class AuthorizeModal extends React.Component {
             this.setTimeout(() => {
                 this.setState({loading: false});
                 this.toggle();
+                window.location.reload();
             }, 1000);
         }).catch(err => {
             console.log(err)
@@ -749,9 +764,9 @@ class AuthorizeModal extends React.Component {
             <span>
             <Button color='secondary' onClick={this.toggle}>Authorize</Button>
             <Modal isOpen={this.state.modal} toggle={this.toggle} className={this.props.className}>
-            <ModalHeader toggle={this.toggle}>Allow this market to withdraw from your account.</ModalHeader>
+            <ModalHeader toggle={this.toggle}>Allow this market to extend an offer of your car.</ModalHeader>
             <ModalBody>
-            <p>This action will allow this market to withdraw {this.props.car.amount} {this.state.symbol} ( Total balance: {this.state.balance} {this.state.symbol}) from your account. You have to allow the market to withdraw money from your account in order to accept offers on cars.</p>
+            <p>This action will allow this market to reregister your vehicle as a part of the transaction. The ownership will only change if the sale is successful and will happend in conjunction with you recieving money for the car.</p>
             </ModalBody>
             <ModalFooter>
             <Button

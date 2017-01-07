@@ -1,6 +1,5 @@
 //import Token from '../../build/contracts/HumanStandardToken.sol.js';
 import Web3 from 'web3';
-import Market from '../build/contracts/IndexedMarketplace.sol.js';
 import DMR from '../build/contracts/DMR.sol.js';
 import Vehicle from '../build/contracts/Vehicle.sol.js';
 import Token from '../build/contracts/HumanStandardToken.sol.js';
@@ -17,10 +16,10 @@ export default class CarStore{
     init(web3) {
 
         this.cars = {};
+        this.allowedToSpend = 0;
         this.changeListeners = [];
 
         DMR.setProvider(web3.currentProvider);
-        Market.setProvider(web3.currentProvider);
         Vehicle.setProvider(web3.currentProvider);
         Token.setProvider(web3.currentProvider);
 
@@ -78,7 +77,8 @@ export default class CarStore{
 
         Promise.all([
             this.fetchAllCars(),
-            this.fetchOfferedCars()
+            this.fetchOfferedCars(),
+            this.checkAllowance()
         ]).then(() => {
             this.dmr.BuyerAcceptedOffer({fromBlock: "latest"}).watch((err,e) => {
                 this.fetchCar(e.args["item"]).then(() => this.notifyChange());
@@ -94,6 +94,10 @@ export default class CarStore{
 
             this.dmr.BuyerCompletedTransaction({fromBlock: "latest"}).watch((err,e) => {
                 this.fetchCar(e.args["item"]).then(() => this.notifyChange());
+            });
+
+            this.token.Approval({fromBlock: "latest"}).watch((err,e) => {
+                this.checkAllowance().then(() => this.notifyChange());
             });
 
         });
@@ -119,8 +123,16 @@ export default class CarStore{
         })
     }
 
-    issueVehicle(vin) {
-        return this.dmr.issueVehicle(vin, { from: this.acc, gas: this.gas });
+    issueVehicle(vin, brand, model, year, color) {
+        console.log("ok!");
+        return this.dmr.issueVehicle(
+            vin,
+            brand,
+            model,
+            year,
+            color,
+            { from: this.acc, gas: this.gas }
+        ).catch(err => console.log(err));
     }
 
     fetchCar(address) {
@@ -129,14 +141,17 @@ export default class CarStore{
             Vehicle.at(address).vin.call(),
             Vehicle.at(address).owner.call(),
             this.dmr.offers.call(address),
-            this.isMarketAuthorized(address)
+            this.isMarketAuthorized(address),
+            Vehicle.at(address).brand.call(),
+            Vehicle.at(address).model.call(),
+            Vehicle.at(address).year.call(),
+            Vehicle.at(address).color.call()
         ]).then(car => {
             let r = ({
-                brand: 'BMW',
-                model: '330d',
-                year: '2015',
-                color: 'Black',
-                plate: 'AZ 50 100',
+                brand: car[5],
+                model: car[6], 
+                year: car[7],
+                color: car[8],
                 address: car[0],
                 authorized: car[4],
                 vin: car[1],
@@ -181,8 +196,10 @@ export default class CarStore{
         return Vehicle.at(car).authorizeSeller(this.dmr.address, { from: this.acc, gas: this.gas });
     }
 
-    allowedToSpend() {
-        return this.token.allowance(this.acc, this.dmr.address).then(r => r.toNumber());
+    checkAllowance() {
+        return  this.token.allowance(this.acc, this.dmr.address)
+            .then(r => r.toNumber())
+            .then(a => this.allowedToSpend = a);
     }
 
     balance() {

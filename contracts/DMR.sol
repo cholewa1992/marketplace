@@ -13,13 +13,13 @@ contract DMR is IndexedMarketplace {
 
     function DMR(Token _token) IndexedMarketplace(_token) { }
 
-    function issueVehicle(string _vin) returns(address) {
+    function issueVehicle(string _vin, string _brand, string _model, string _year, string _color) returns(address) {
 
         /* Check of the plate number is already in use */
         if(index[_vin] != address(0x0)) throw;
 
         /* Creating the new vehicle */
-        var vehicle = new Vehicle(_vin);
+        var vehicle = new Vehicle(_vin, _brand, _model, _year, _color);
 
         /* Transferring the ownership to caller */
         vehicle.transferOwnership(msg.sender);

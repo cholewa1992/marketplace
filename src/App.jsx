@@ -41,9 +41,6 @@ export class App extends Component {
             <Link to={'register'} activeClassName="active" className="nav-link">Register</Link>
             </NavItem>
             <NavItem>
-            <Link to={'search'} activeClassName="active" className="nav-link">Search</Link>
-            </NavItem>
-            <NavItem>
             <Link to={'cars'} activeClassName="active" className="nav-link">Your cars</Link>
             </NavItem>
             </Nav>

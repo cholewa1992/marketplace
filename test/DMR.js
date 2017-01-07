@@ -58,12 +58,20 @@ contract("DMR", accounts => {
                 /* Getting the address that car will be deployed to */
                 async(dmr.issueVehicle.call(
                     "5GZCZ43D13S812715",// vin
+                    "BMW",              // Brand
+                    "330d",             // Model
+                    "2016",             // Year
+                    "Black",            // Color
                     { from: owner}      // executor
                 )),
 
                 /* Executing the call */
                 async(dmr.issueVehicle(
                     "5GZCZ43D13S812715",// vin
+                    "BMW",              // Brand
+                    "330d",             // Model
+                    "2016",             // Year
+                    "Black",            // Color
                     { from: owner}      // executor
                 )).should.be.fulfilled
 

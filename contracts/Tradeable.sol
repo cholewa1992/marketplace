@@ -22,6 +22,7 @@ contract Tradeable is Owned {
 
     function transferOwnership(address _newOwner) isSellerOrOwner {
         owner = _newOwner;
+        seller = address(0x0);
         onTransferOwnership(_newOwner);
     }
 
