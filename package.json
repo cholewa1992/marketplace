@@ -7,29 +7,29 @@
   },
   "devDependencies": {
     "react-scripts": "0.6.1",
-    "chai": "*",
-    "chai-as-promised": "*",
-    "chai-bignumber": "*",
-    "chai-spies": "*",
-    "ethereumjs-testrpc": "*"
+    "chai": "3.5.0",
+    "chai-as-promised": "6.0.0",
+    "chai-bignumber": "2.0.0",
+    "chai-spies": "0.7.1",
+    "ethereumjs-testrpc": "2.2.7"
   },
   "dependencies": {
-    "bootstrap-v4-dev": "^4.0.0-alpha.5",
-    "ether-pudding": "^3.2.0",
-    "font-awesome": "^4.7.0",
+    "bootstrap-v4-dev": "4.0.0-alpha.5",
+    "ether-pudding": "3.2.0",
+    "font-awesome": "4.7.0",
     "react": "15.4.1",
     "react-addons-css-transition-group": "15.4.1",
     "react-addons-transition-group": "15.4.1",
     "react-dom": "15.4.1",
-    "react-mixin": "^3.0.5",
+    "react-mixin": "3.0.5",
     "react-router": "2.8.1",
-    "react-timer-mixin": "^0.13.3",
+    "react-timer-mixin": "0.13.3",
     "reactstrap": "3.9.0",
-    "truffle": "*",
+    "truffle": "2.1.1",
     "truffle-solidity-loader": "0.0.8",
-    "w3.js": "^1.0.5",
-    "webpack": "^1.14.0",
-    "webpack-dev-server": "^1.16.2"
+    "w3.js": "1.0.5",
+    "webpack": "1.14.0",
+    "webpack-dev-server": "1.16.2"
   },
   "scripts": {
     "start": "react-scripts start",
