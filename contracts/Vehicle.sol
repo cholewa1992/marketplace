@@ -1,4 +1,4 @@
-pragma solidity ^0.4.0;
+pragma solidity ^0.4.4;
 import "Tradeable.sol";
 
 contract Vehicle is Tradeable {

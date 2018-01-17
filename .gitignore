@@ -1,5 +1,6 @@
 [Bb]uild/
 *.swp
+package-lock.json
 
 # Created by https://www.gitignore.io/api/osx,windows,archives
 
